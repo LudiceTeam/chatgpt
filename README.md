@@ -5,10 +5,26 @@
   BBG-ChatGPT
 </h1>
 
-## Installation for developers(Frontend)
+## Installation for developers
 
-## Installation for developers (Backend)
+``` bash
+git clone https://github.com/BBG-Deep-Inc/chatgpt.git
+```
 
+``` bash
+cd chatgpt
+python3 -m venv .venv   
+source chatgpt/.venv/bin/activate 
+```
+
+> [!INFO] 
+> Frontend installation
+
+``` bash
+cd frontend
+pip3 install requirements.txt
+
+```
 
 ## Licence
 BBG-chatGPT is released under the 
