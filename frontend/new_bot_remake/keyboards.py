@@ -4,3 +4,7 @@ from aiogram.types import ReplyKeyboardMarkup,KeyboardButton,InlineKeyboardButto
 main_keyboard = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text = "Chat"),KeyboardButton(text = "Profile")]
 ])
+
+profile_key_borad = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text = "Subscribe")]
+])

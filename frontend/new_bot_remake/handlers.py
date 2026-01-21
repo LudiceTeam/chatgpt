@@ -3,7 +3,7 @@ from aiogram.filters import CommandStart,Command
 from aiogram.types import Message,File,Video,PhotoSize
 import aiogram
 import keyboards as kb
-from backend.database.core import create_deafault_user_data,remove_free_zapros,check_free_zapros_amount,get_amount_of_zaproses,subscribe,set_sub_bac_to_false,get_me,unsub_all_users_whos_sub_is_ending_today
+from backend.database.core import create_deafault_user_data,remove_free_zapros,check_free_zapros_amount,get_amount_of_zaproses,subscribe,set_sub_bac_to_false,get_me,unsub_all_users_whos_sub_is_ending_today,is_user_subbed
 
 import sys
 import os
@@ -32,9 +32,17 @@ async def profile_handler(message:Message):
     user_id = message.from_user.id
     user_data = get_me(str(user_id))
     user_data[str(user_id)] = user_name
-    await message.answer(
+    user_subbed:bool = await  is_user_subbed(str(user_id))
+    if not user_subbed:
+        await message.answer(
+        user_data,
+        reply_markup=kb.profile_key_borad        
+        )
+    else:
+        await message.answer(
         user_data        
     )
+    
     
     
        
