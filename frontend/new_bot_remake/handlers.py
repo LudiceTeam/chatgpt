@@ -1,9 +1,10 @@
 from aiogram import Bot,Dispatcher,F,Router
 from aiogram.filters import CommandStart,Command
-from aiogram.types import Message,File,Video,PhotoSize
+from aiogram.types import Message,File,Video,PhotoSize,LabeledPrice
 import aiogram
 import keyboards as kb
-from backend.database.core import create_deafault_user_data,remove_free_zapros,check_free_zapros_amount,get_amount_of_zaproses,subscribe,set_sub_bac_to_false,get_me,unsub_all_users_whos_sub_is_ending_today,is_user_subbed
+from backend.database.core import create_deafault_user_data,remove_free_zapros,check_free_zapros_amount,get_amount_of_zaproses,subscribe,set_sub_bac_to_false,get_me,unsub_all_users_whos_sub_is_ending_today,is_user_subbed,buy_zaproses
+from main import bot
 
 import sys
 import os
@@ -42,6 +43,35 @@ async def profile_handler(message:Message):
         await message.answer(
         user_data        
     )
+
+@router.message(F.text == "Subscribe")
+async def subscribe_handler(message:Message):
+    user_id = message.from_user.id
+    buy_sub_text = "" # вставить норм текст для подписки
+    await message.answer(buy_sub_text)
+
+
+
+#сделать  норм invoice
+@router.message(F.text == "Buy subscribtion")
+async def buy_sub_handler(message:Message):
+    await bot.send_invoice(
+        chat_id=message.chat.id,
+        title="Название товара",
+        description="Описание товара",
+        payload="test_payload", 
+        provider_token="YOUR_PROVIDER_TOKEN", 
+        currency="RUB",
+        prices=[
+            LabeledPrice(label="Товар 1", amount=10000),  # 100.00 RUB
+            LabeledPrice(label="Скидка", amount=-2000),   # -20.00 RUB
+        ],
+        start_parameter="test",
+        need_email=True, 
+        need_phone_number=False,
+        is_flexible=False, 
+    )
+    
     
     
     
