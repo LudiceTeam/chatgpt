@@ -121,7 +121,10 @@ async def answer_with_photo(message:Message):
             for (bbox,text,prob) in results:
                 if prob > 0.3:
                     text_lines.append(text)
-            result_text = "\n".join(text_lines)        
+            result_text = "\n".join(text_lines)
+        else:
+            await message.answer(text = "Текст с фотографии не извелечен")      
+            return      
         
         user_id = message.from_user.id
         is_user_subbed = await is_user_subbed(str(user_id))
