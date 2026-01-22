@@ -1,7 +1,7 @@
 from fastapi import FastAPI,HTTPException,Depends,Request,Header,status
 from pydantic import BaseModel
 from typing import List,Optional
-from ai.olama import OllamaAPI
+#from ai.olama import OllamaAPI
 import uvicorn
 import hmac
 import hashlib
@@ -9,8 +9,8 @@ import json
 import os
 import time
 from dotenv import load_dotenv
-from database.core import remove_free_zapros,check_free_zapros_amount,buy_zaproses,get_amount_of_zaproses,is_user_subbed,create_table,get_all_data,get_me,subscribe,is_user_exists,create_deafault_user_data,set_sub_bac_to_false,unsub_all_users_whos_sub_is_ending_today
-from database.chats_database.chats_core import write_message,get_all_user_messsages,delete_message,delete_all_messages
+from backend.database.core import remove_free_zapros,check_free_zapros_amount,buy_zaproses,get_amount_of_zaproses,is_user_subbed,create_table,get_all_data,get_me,subscribe,is_user_exists,create_deafault_user_data,set_sub_bac_to_false,unsub_all_users_whos_sub_is_ending_today
+from backend.database.chats_database.chats_core import write_message,get_all_user_messsages,delete_message,delete_all_messages
 import asyncio
 import atexit
 import warnings
@@ -33,7 +33,7 @@ sys.excepthook = custom_excepthook
 
 load_dotenv()
 app = FastAPI()
-ai = OllamaAPI()
+
 
 
 

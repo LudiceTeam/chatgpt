@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 import asyncpg
 import os
 from dotenv import load_dotenv
-from database.models import metadata_obj,table
+from backend.database.models import metadata_obj,table
 import asyncio
 import atexit
 

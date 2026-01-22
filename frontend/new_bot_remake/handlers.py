@@ -23,7 +23,7 @@ from backend.database.core import create_deafault_user_data,remove_free_zapros,c
 router = Router()
 
 user_chat_flag:bool = False
-reader = easyocr.Reader(["en","rus"])
+reader = easyocr.Reader(["en","ru"])
 
 @router.message(CommandStart())
 async def start_messsage(message:Message):
@@ -31,7 +31,7 @@ async def start_messsage(message:Message):
     user_chat_flag = False
     user_id = message.from_user.id
     await create_deafault_user_data(str(user_id))
-    await message.answer("Welcome")# вставить сюда норм текст
+    await message.answer("Welcome",reply_markup=kb.main_keyboard)# вставить сюда норм текст
 
 @router.message(F.text == "Profile")
 async def profile_handler(message:Message):
