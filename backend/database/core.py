@@ -211,7 +211,15 @@ async def unsub_all_users_whos_sub_is_ending_today():
             raise  Exception(f"Error : {e}") 
 
 async def get_sub_date_end(username:str) -> str:
-    pass
+    async with AsyncSession(async_engine) as conn:
+        try:
+            stmt = select(table.c.date).where(table.c.username == username)
+            res = await conn.execute(stmt)
+            data = res.scalar_one_or_none()
+            if data is not None:
+                return data
+        except Exception as e:
+            raise Exception(f"Error {e}")
 
 def cleanup():
     """Очистка при завершении"""
