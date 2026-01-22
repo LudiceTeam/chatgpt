@@ -88,59 +88,64 @@ async def chat_handler(message:Message):
 
 @router.message()
 async def answer_messages(message:Message):
-    user_id = message.from_user.id
-    is_user_subbed = await is_user_subbed(str(user_id))
-    if not is_user_subbed:
-        user_free_req = await get_amount_of_zaproses(str(user_id))
-        if user_free_req == 0:
-            await message.answer(text = "У вас не осталось бесплатных запросов.Купить подписку вы можете перейдя в профиль")
+    if user_chat_flag:
+        user_id = message.from_user.id
+        is_user_subbed = await is_user_subbed(str(user_id))
+        if not is_user_subbed:
+            user_free_req = await get_amount_of_zaproses(str(user_id))
+            if user_free_req == 0:
+                await message.answer(text = "У вас не осталось бесплатных запросов.Купить подписку вы можете перейдя в профиль")
+            else:
+                await remove_free_zapros(str(user_id))
+                response = ask_chat_gpt(str(message.text))
+                await write_message(str(user_id),str(message.text),response)
+                await message.answer(text = response)
         else:
-            await remove_free_zapros(str(user_id))
             response = ask_chat_gpt(str(message.text))
             await write_message(str(user_id),str(message.text),response)
             await message.answer(text = response)
-    else:
-        response = ask_chat_gpt(str(message.text))
-        await write_message(str(user_id),str(message.text),response)
-        await message.answer(text = response)
                 
             
 @router.message(F.photo)
 async def answer_with_photo(message:Message):
-    photo = message.photo[-1]
-    file = await message.bot.get_file(photo.file_id)
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as tmp_file:
-        await message.bot.download_file(file.file_path, tmp_file.name)
-        results = reader.readtext(tmp_file.name)
-    os.unlink(tmp_file.name)
-    
-    if results:
-        text_lines = []
-        for (bbox,text,prob) in results:
-            if prob > 0.3:
-                text_lines.append(text)
-        result_text = " ".join(text_lines)        
-    
-    user_id = message.from_user.id
-    is_user_subbed = await is_user_subbed(str(user_id))
-    if not is_user_subbed:
-        user_free_req = await get_amount_of_zaproses(str(user_id))
-        if user_free_req == 0:
-            await message.answer(text = "У вас не осталось бесплатных запросов.Купить подписку вы можете перейдя в профиль")
+    if user_chat_flag:
+        photo = message.photo[-1]
+        file = await message.bot.get_file(photo.file_id)
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as tmp_file:
+            await message.bot.download_file(file.file_path, tmp_file.name)
+            results = reader.readtext(tmp_file.name)
+        os.unlink(tmp_file.name)
+        
+        if results:
+            text_lines = []
+            for (bbox,text,prob) in results:
+                if prob > 0.3:
+                    text_lines.append(text)
+            result_text = "\n".join(text_lines)        
+        
+        user_id = message.from_user.id
+        is_user_subbed = await is_user_subbed(str(user_id))
+        if not is_user_subbed:
+            user_free_req = await get_amount_of_zaproses(str(user_id))
+            if user_free_req == 0:
+                await message.answer(text = "У вас не осталось бесплатных запросов.Купить подписку вы можете перейдя в профиль")
+            else:
+                
+                full_text:str = str(message.text) + "\n" + message.caption + "\n" + result_text
+                await remove_free_zapros(str(user_id))
+                response = ask_chat_gpt(str(full_text))
+                await write_message(str(user_id),str(message.text),response)
+                await message.answer(text = response)
         else:
-            
-            full_text:str = str(message.text) + "\n" + message.caption + "\n" + result_text
-            await remove_free_zapros(str(user_id))
-            response = ask_chat_gpt(str(full_text))
+            response = ask_chat_gpt(str(message.text))
             await write_message(str(user_id),str(message.text),response)
             await message.answer(text = response)
-    else:
-        response = ask_chat_gpt(str(message.text))
-        await write_message(str(user_id),str(message.text),response)
-        await message.answer(text = response)
-                
+                    
     
-    
+@router.message(F.document)
+async def answer_with_document(message:Message):
+    if user_chat_flag:
+        pass
     
     
        
