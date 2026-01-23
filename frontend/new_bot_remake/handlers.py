@@ -11,6 +11,7 @@ import tempfile
 import easyocr
 import numpy as np
 from config import PROJECT_ROOT
+from pathlib import Path
 
 
 
@@ -147,8 +148,32 @@ async def answer_with_photo(message:Message):
     
 @router.message(F.document)
 async def answer_with_document(message:Message):
+    async def read_text_from_image(file_path:str) -> str:
+        results = reader.readtext(file_path,detail = 0,paragraph=True)
+        return "\n".join(results) if results else ""
     if user_chat_flag:
-        pass
+        document = message.document
+        filename = document.file_name.lower()
+        file = await message.bot.download_file(document.file_id)
+        with tempfile.TemporaryFile(delete = False,suffix=Path(filename).suffix) as tmp_fi:
+            await message.bot.download_file(file.file_path, tmp_fi.name)
+            file_path = tmp_fi.name
+        try:
+            if file_path.endswith(('.jpg', '.jpeg', '.png', '.bmp', '.gif')):
+                text = await read_text_from_image(file_path)
+            elif file_path.endswith('.pdf'):
+                pass
+            elif file_path.endswith(('.docx','.doc')):
+                pass
+            elif file_path.endswith(('.txt','.text')):
+                with open(file_path,"r",encoding='utf-8') as file:
+                    text = file.read()
+            else:
+                await message.answer(text = "Формат файла не поддерживается")
+                return
+        except Exception as e:
+            raise Exception(f"Error : {e}") 
+            
     
     
        
