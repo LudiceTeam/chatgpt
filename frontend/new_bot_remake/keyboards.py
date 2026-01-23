@@ -7,10 +7,10 @@ main_keyboard = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text = "Chat"),KeyboardButton(text = "Profile")]
 ])
 
-profile_key_borad = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text = "Subscribe",callback_data="Subscribe")]
+profile_key_borad = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton(text = "Subscribe"),KeyboardButton(text = "Back")]
 ])
 
-buy_sub_keyboard = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text = "Buy subscribtion",callback_data="Buy subscribtion")]
+buy_sub_keyboard = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton(text = "Buy subscribtion"),KeyboardButton(text = "Back")]
 ])
