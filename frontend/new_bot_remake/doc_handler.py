@@ -87,3 +87,4 @@ async def extract_text_from_docx_images(docx_path: str) -> str:
             shutil.rmtree(temp_dir)
     
     return "\n".join(images_text)
+
