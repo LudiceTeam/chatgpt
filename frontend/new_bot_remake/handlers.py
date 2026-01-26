@@ -25,13 +25,12 @@ from typing import List
 
 router = Router()
 
-user_chat_flag:bool = False
+
 reader = easyocr.Reader(["en","ru"])
 
 @router.message(CommandStart())
 async def start_messsage(message:Message):
     user_name = message.from_user.username
-    user_chat_flag = False
     user_id = message.from_user.id
     await create_deafault_user_data(str(user_id))
     await message.answer("Welcome",reply_markup=kb.main_keyboard)# вставить сюда норм текст
@@ -61,8 +60,7 @@ async def unsub_full_func(username:str) -> bool:
 
 @router.message(F.text == "Profile")
 async def profile_handler(message:Message):
-    global user_chat_flag
-    user_chat_flag = False
+    
     user_name = message.from_user.username
     user_id = message.from_user.id
     res_unsub:bool = await unsub_full_func(str(user_id))
@@ -95,7 +93,7 @@ async def profile_handler(message:Message):
 @router.message(F.text == "Subscribe")
 async def subscribe_handler(message:Message):
     user_id = message.from_user.id
-    user_chat_flag = False
+  
     buy_sub_text = "Тестовое лицензионное соглашение" # вставить норм текст для подписки
     await message.answer(buy_sub_text,reply_markup=kb.buy_sub_keyboard)
 
@@ -121,7 +119,7 @@ async def buy_sub_handler(message:Message):
         need_email=True, 
         need_phone_number=False,
         is_flexible=False, 
-        reply_markup=kb.back_keyboard
+        #reply_markup=kb.back_keyboard
     )
 
 @router.pre_checkout_query()
@@ -138,13 +136,12 @@ async def chat_handler(message:Message):
     res_unsub:bool = await unsub_full_func(str(user_id))
     if res_unsub:
         await message.asnwer(text = "Ваша подписка закончилась.Что бы продолжить пользоваться премиум функционалом вам нужно снова ее оформить.Вы можете пользоваться ботом в пределе бесплатного тарифа.Благодарим за поддержку")
-    global user_chat_flag
-    user_chat_flag = True  
+   
     await message.answer("Привет я твой помошник ChatGPT от LudiceTeam в Telegram") # написать норм тектс для бота  типо просто первое сообщение в чате
 
-@router.message()
+@router.message(F.text & ~F.command)
 async def answer_messages(message:Message):
-    if user_chat_flag:
+   
         user_id = message.from_user.id
         res_unsub:bool = await unsub_full_func(str(user_id))
         if res_unsub:
@@ -158,7 +155,7 @@ async def answer_messages(message:Message):
                 await message.answer(text = "У вас не осталось бесплатных запросов.Купить подписку вы можете перейдя в профиль")
             else:
                 await remove_free_zapros(str(user_id))
-                response = ask_chat_gpt(str(message.text + f"Вот все сообщение пользователя что бы тебе было легче его понимать : {user_messages}"))
+                response = ask_chat_gpt(str(message.text) + f"Вот все сообщение пользователя что бы тебе было легче его понимать : {user_messages}")
                 await write_message(str(user_id),str(message.text),response)
                 await message.answer(text = response)
         else:
@@ -169,7 +166,7 @@ async def answer_messages(message:Message):
             
 @router.message(F.photo)
 async def answer_with_photo(message:Message):
-    if user_chat_flag:
+   
         user_id = message.from_user.id
         res_unsub:bool = await unsub_full_func(str(user_id))
         if res_unsub:
@@ -234,7 +231,7 @@ async def read_pdf(path:str) -> str:
 
 @router.message(F.document)
 async def answer_with_document(message:Message):
-    if user_chat_flag:
+    
         user_id = message.from_user.id
         res_unsub:bool = await unsub_full_func(str(user_id))
         if res_unsub:
@@ -295,4 +292,4 @@ async def answer_with_document(message:Message):
             
 
 #написать в каждой функции проверку что у пользователя не закончилась подписка если закончилась то отписать
-       
+#переписать логику сосотаяние чата и все      
