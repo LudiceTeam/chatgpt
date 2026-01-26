@@ -14,3 +14,7 @@ profile_key_borad = ReplyKeyboardMarkup(keyboard=[
 buy_sub_keyboard = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text = "Buy subscribtion"),KeyboardButton(text = "Back")]
 ])
+
+back_keyboard = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton(text = "Back")]
+])

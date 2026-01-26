@@ -1,6 +1,6 @@
 from aiogram import Bot,Dispatcher,F,Router
 from aiogram.filters import CommandStart,Command
-from aiogram.types import Message,File,Video,PhotoSize,LabeledPrice
+from aiogram.types import Message,File,Video,PhotoSize,LabeledPrice,PreCheckoutQuery,ContentType
 import aiogram
 import keyboards as kb
 #from main import bot
@@ -61,6 +61,7 @@ async def unsub_full_func(username:str) -> bool:
 
 @router.message(F.text == "Profile")
 async def profile_handler(message:Message):
+    global user_chat_flag
     user_chat_flag = False
     user_name = message.from_user.username
     user_id = message.from_user.id
@@ -95,10 +96,12 @@ async def profile_handler(message:Message):
 async def subscribe_handler(message:Message):
     user_id = message.from_user.id
     user_chat_flag = False
-    buy_sub_text = "" # вставить норм текст для подписки
+    buy_sub_text = "Тестовое лицензионное соглашение" # вставить норм текст для подписки
     await message.answer(buy_sub_text,reply_markup=kb.buy_sub_keyboard)
 
-
+@router.message(F.text == "Back")
+async def back(message:Message):
+    await message.answer(text = "Вы вернулись в главное меню",reply_markup=kb.main_keyboard)
 
 #сделать  норм invoice
 @router.message(F.text == "Buy subscribtion")
@@ -118,7 +121,16 @@ async def buy_sub_handler(message:Message):
         need_email=True, 
         need_phone_number=False,
         is_flexible=False, 
+        reply_markup=kb.back_keyboard
     )
+
+@router.pre_checkout_query()
+async def check_pay(pre_check_out_qr:PreCheckoutQuery):
+    pass 
+
+@router.message(lambda message: message.content_type == ContentType.SUCCESSFUL_PAYMENT)   
+async def  succes_ful_payment(message:Message):
+    pass
 
 @router.message(F.text == "Chat")
 async def chat_handler(message:Message):
