@@ -54,7 +54,7 @@ async def is_user_exists(username:str) -> bool:
         except exc.SQLAlchemyErro:
             raise exc.SQLAlchemyError("Error while executing")        
 
-async def create_user(username:str):
+async def create_user_state(username:str):
     if await is_user_exists(username):
         return
     async with AsyncSession(async_engine) as conn:

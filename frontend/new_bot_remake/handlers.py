@@ -22,6 +22,7 @@ from backend.api import ask_chat_gpt
 from backend.database.core import create_deafault_user_data,remove_free_zapros,check_free_zapros_amount,get_amount_of_zaproses,subscribe,set_sub_bac_to_false,get_me,unsub_all_users_whos_sub_is_ending_today,is_user_subbed,buy_zaproses,get_sub_date_end
 from datetime import timedelta,datetime
 from typing import List
+from backend.database.state_database.state_core import create_user_state,change_user_state,get_user_state
 
 router = Router()
 
@@ -33,6 +34,7 @@ async def start_messsage(message:Message):
     user_name = message.from_user.username
     user_id = message.from_user.id
     await create_deafault_user_data(str(user_id))
+    await create_user_state(str(user_id))
     await message.answer("Welcome",reply_markup=kb.main_keyboard)# вставить сюда норм текст
     
 async def unsub_full_func(username:str) -> bool:
