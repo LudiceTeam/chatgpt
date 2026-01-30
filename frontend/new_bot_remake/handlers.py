@@ -124,6 +124,17 @@ async def buy_sub_handler(message:Message):
         is_flexible=False, 
         #reply_markup=kb.back_keyboard
     )
+    
+@router.message(F.text == "Reset Context")
+async def reset(message:Message):
+    user_id = str(message.from_user.id)
+    await message.answer(text = "Вы удалите все итсторию переписки,после этого ChatGPT создаст новый чат")
+    await delete_all_messages(user_id)
+    await message.answer(text = "История отчищена.Можете продолжать пользоваться")
+
+@router.message(F.text == "Help")
+async def help(message:Message):
+    await message.answer(text = "Help")
 
 @router.pre_checkout_query()
 async def check_pay(pre_check_out_qr:PreCheckoutQuery):
@@ -332,14 +343,5 @@ async def answer_with_document(message: Message):
         except Exception as e:
             raise Exception(f"Error : {e}")
 
-@router.message(F.text == "Reset Context")
-async def reset(message:Message):
-    user_id = str(message.from_user.id)
-    await message.answer(text = "Вы удалите все итсторию переписки,после этого ChatGPT создаст новый чат")
-    await delete_all_messages(user_id)
-    await message.answer(text = "История отчищена.Можете продолжать пользоваться")
 
-@router.message(F.text == "Help")
-async def help(message:Message):
-    pass
             
