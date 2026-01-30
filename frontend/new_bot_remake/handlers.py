@@ -30,6 +30,7 @@ router = Router()
 
 
 reader = easyocr.Reader(["en","ru"],gpu = False) # будут норм сервера поставить True
+os.environ['PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK'] = 'True'
 
 @router.message(CommandStart())
 async def start_messsage(message:Message):
@@ -193,89 +194,43 @@ async def answer_messages(message:Message):
  
 
 async def extract_text_from_image_new(image_bytes: bytes) -> str:
-  
+   
     nparr = np.frombuffer(image_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     
     if img is None:
         return ""
     
-    # 1. Исправляем перспективу (если текст под углом)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    
-    # 2. Детектирование краев для выравнивания
-    edges = cv2.Canny(gray, 50, 150)
-    
-    # 3. Находим контуры документа
-    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    if contours:
-        # Берем самый большой контур
-        largest_contour = max(contours, key=cv2.contourArea)
-        # Упрощаем контур
-        epsilon = 0.02 * cv2.arcLength(largest_contour, True)
-        approx = cv2.approxPolyDP(largest_contour, epsilon, True)
-        
-        # Если это четырехугольник (страница)
-        if len(approx) == 4:
-            # Выравниваем перспективу
-            img = four_point_transform(img, approx.reshape(4, 2))
-    
-    # 4. Ресайз
+   
     height, width = img.shape[:2]
-    if max(height, width) > 1200:
-        scale = 1200 / max(height, width)
-        img = cv2.resize(img, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+    if max(height, width) > 800:
+        scale = 800 / max(height, width)
+        img = cv2.resize(img, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
     
-    # 5. Улучшение качества
-    # 5.1 Убираем шум
-    img = cv2.fastNlMeansDenoisingColored(img, None, 10, 10, 7, 21)
-    
-    # 5.2 Резкость
-    kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
-    img = cv2.filter2D(img, -1, kernel)
-    
-    # 5.3 Контраст (CLAHE в LAB)
-    lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
-    l, a, b = cv2.split(lab)
-    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
-    cl = clahe.apply(l)
-    enhanced = cv2.merge((cl, a, b))
-    img = cv2.cvtColor(enhanced, cv2.COLOR_LAB2BGR)
-    
-    # 5.4 Бинаризация (ч/б)
+   
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # Адаптивная бинаризация для неравномерного освещения
-    binary = cv2.adaptiveThreshold(gray, 255, 
-                                  cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                  cv2.THRESH_BINARY, 11, 2)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    enhanced = clahe.apply(gray)
     
-    # 6. Пробуем несколько методов OCR
+   
     texts = []
     
-    # Метод 1: EasyOCR на бинаризованном изображении
-    result = reader.readtext(binary, paragraph=True, detail=0)
-    if result:
-        texts.append("\n".join(result))
+
+    result1 = reader.readtext(enhanced, paragraph=True, detail=0)
+    if result1:
+        texts.append("\n".join(result1))
     
-    # Метод 2: EasyOCR на цветном (на всякий случай)
-    result2 = reader.readtext(img, paragraph=True, detail=0)
+   
+    result2 = reader.readtext(enhanced, paragraph=False, detail=0)
     if result2:
         texts.append("\n".join(result2))
     
-    # Метод 3: PaddleOCR если установлен (лучше для русских плохих фото)
-    try:
-        from paddleocr import PaddleOCR
-        if not hasattr(extract_text_from_image_new, 'paddle_ocr'):
-            extract_text_from_image_new.paddle_ocr = PaddleOCR(use_angle_cls=True, lang='ru')
-        
-        ocr_result = extract_text_from_image_new.paddle_ocr.ocr(img, cls=True)
-        if ocr_result and ocr_result[0]:
-            paddle_text = "\n".join([line[1][0] for line in ocr_result[0]])
-            texts.append(paddle_text)
-    except ImportError:
-        pass
+ 
+    result3 = reader.readtext(img, paragraph=True, detail=0)
+    if result3:
+        texts.append("\n".join(result3))
     
-    # Выбираем лучший результат (с наибольшим текстом)
+   
     if texts:
         best_text = max(texts, key=len)
         return best_text.strip()
@@ -341,7 +296,7 @@ async def answer_with_photo(message: Message):
       
         result_text = await extract_text_from_image_new(image_bytes)
         
-        await message.answer(text = f"Вот текст с картинки  : {result_text}")
+       # await message.answer(text = f"Вот текст с картинки  : {result_text}")
         
         if not result_text:
             await message.answer(text="Текст с фотографии не извлечен")
