@@ -207,6 +207,7 @@ async def answer_with_photo(message:Message):
                 return      
             
             is_user_subbed_ = await is_user_subbed(str(user_id))
+            #await message.answer(f"Вот текст с картинки : {result_text}")
             if not is_user_subbed_:
                 user_free_req = await get_amount_of_zaproses(str(user_id))
                 if user_free_req == 0:
@@ -331,11 +332,14 @@ async def answer_with_document(message: Message):
         except Exception as e:
             raise Exception(f"Error : {e}")
 
-@router.message(F.text == "Reset")
+@router.message(F.text == "Reset Context")
 async def reset(message:Message):
     user_id = str(message.from_user.id)
-    await message.answer("Вы удалите все итсторию переписки,после этого ChatGPT создаст новый чат")
+    await message.answer(text = "Вы удалите все итсторию переписки,после этого ChatGPT создаст новый чат")
     await delete_all_messages(user_id)
-    await message.answer("История отчищена.Можете продолжать пользоваться")
-    
+    await message.answer(text = "История отчищена.Можете продолжать пользоваться")
+
+@router.message(F.text == "Help")
+async def help(message:Message):
+    pass
             
