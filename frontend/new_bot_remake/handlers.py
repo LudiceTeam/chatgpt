@@ -135,6 +135,29 @@ async def subscribe_handler(message:Message):
         reply_markup=kb.inline_pay
     )
     
+    
+
+@router.message(F.text == "Buy Requests")
+async def buy_req_handler(message:Message):
+    await message.answer(text = "Выберете то количество запросов,которое хотите купить",reply_markup=kb.buy_req_keyboard) 
+
+@router.message(F.text == "5 Requests")
+async def buy_5_req_handler(message:Message):
+    await message.answer(text = "Текст для покупки 5 запросов")
+    # инмвойс в звездах на покупку 5 ти запросов
+    
+@router.message(F.text == "10 Requests")
+async def buy_10_req_handler(message:Message):
+    await message.answer(text = "Текст для покупки 10 запросов")    
+
+@router.message(F.text == "20 Requests")
+async def buy_20_req_handler(message:Message):
+    await message.answer(text = "Текст для покупки 20 запросов")
+    # инмвойс в звездах на покупку 20 ти запросов
+   
+
+
+    
    
 @router.pre_checkout_query()
 async def pre_checkout_handler(pre_checkout_query: PreCheckoutQuery):
@@ -160,24 +183,6 @@ async def succesful_payment_handler(message:Message):
 @router.message(F.text == "Back")
 async def back(message:Message):
     await message.answer(text = "Вы вернулись в главное меню",reply_markup=kb.main_keyboard)
-
-
-
-@router.message(F.text == "Buy Requests")
-async def buy_req_handler(message:Message):
-    await message.answer(text = "Выберете то количество запросов,которое хотите купить",reply_markup=kb.buy_req_keyboard) 
-
-@router.message(F.text == "5 Requests")
-async def buy_5_req_handler(message:Message):
-    await message.answer(text = "Текст для покупки 5 запросов")
-    # инмвойс в звездах на покупку 5 ти запросов
-    
-@router.message(F.text == "20 Requests")
-async def buy_20_req_handler(message:Message):
-    await message.answer(text = "Текст для покупки 20 запросов")
-    # инмвойс в звездах на покупку 20 ти запросов
-   
-
 
 
     
