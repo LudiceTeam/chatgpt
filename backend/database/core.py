@@ -138,7 +138,7 @@ async def get_amount_of_zaproses(username:str) -> int:
         except Exception as e:
             raise  Exception(f"Error : {e}")  
         
-
+# premium sub code
 async def subscribe(username:str):
     async with AsyncSession(async_engine) as conn:
         try:
@@ -148,6 +148,45 @@ async def subscribe(username:str):
                 await conn.execute(stmt)
         except Exception as e:
             raise Exception(f"Error : {e}")
+        
+async def set_sub_bac_to_false(username:str):
+    async with AsyncSession(async_engine) as conn:
+        try:
+            async with conn.begin():
+                stmt = table.update().where(table.c.username == username).values(sub = False,date = "")
+                await conn.execute(stmt)
+        except Exception as e:
+            raise Exception(f"Error : {e}")
+        
+
+async def is_user_subbed(username:str) -> bool:
+    if not await is_user_exists(username):
+        return False
+    async with AsyncSession(async_engine) as conn:
+        try:
+            stmt = select(table.c.sub).where(table.c.username == username)
+            res = await conn.execute(stmt)
+            data =  res.scalar_one_or_none()
+            if data is not None:
+               return bool(data)
+            return False
+        except Exception as e:
+            raise Exception(f"Error : {e}")  
+
+
+async def get_sub_date_end(username:str) -> str:
+    async with AsyncSession(async_engine) as conn:
+        try:
+            stmt = select(table.c.date).where(table.c.username == username)
+            res = await conn.execute(stmt)
+            data = res.scalar_one_or_none()
+            if data is not None:
+                return data
+        except Exception as e:
+            raise Exception(f"Error {e}")
+        
+        
+# Basic sub code
         
 async def subscribe_basic(username:str):
     async with AsyncSession(async_engine) as conn:
@@ -178,43 +217,48 @@ async def unsub_basic(username:str):
             except Exception as e:
                 raise Exception(f"Error : {e}")
             
-async def set_sub_bac_to_false(username:str):
+            
+async def is_user_subbed_basic(username:str) -> bool:
     async with AsyncSession(async_engine) as conn:
         try:
-            async with conn.begin():
-                stmt = table.update().where(table.c.username == username).values(sub = False,date = "")
-                await conn.execute(stmt)
-        except Exception as e:
-            raise Exception(f"Error : {e}")
-        
-
-async def is_user_subbed(username:str) -> bool:
-    if not await is_user_exists(username):
-        return False
-    async with AsyncSession(async_engine) as conn:
-        try:
-            stmt = select(table.c.sub).where(table.c.username == username)
+            stmt = select(table.c.basic_sub).where(table.c.username == username)
             res = await conn.execute(stmt)
-            data =  res.scalar_one_or_none()
+            data = res.scalar_one_or_none()
             if data is not None:
-               return bool(data)
+                return data
             return False
         except Exception as e:
-            raise Exception(f"Error : {e}")  
+            raise Exception(f"Error :  {e}")
 
+async def get_last_ref_basic(username:str) -> str:
+    async with AsyncSession(async_engine) as conn:
+        try:
+            stmt = select(table.c.last_ref).where(table.c.username == username)
+            res = await conn.execute(stmt)
+            data = res.scalar_one_or_none()
+            if data is not None:
+                return str(data)
+        except Exception as e:
+            raise Exception(f"Error : {e}")
+
+
+            
 
 async def get_me(username:str) -> dict:
     async with AsyncSession(async_engine) as conn:
         try:
             stmt = select(table).where(table.c.username == username)
             res = await conn.execute(stmt)
-            data =  res.first()
+            data = res.first()
+            
+            basic_sub = await is_user_subbed_basic(username)
             if data is not None:
                 user_data = data
                 return {
                     "Username":user_data[0],
                     "Free requests":user_data[2],
                     "Subscribed":user_data[3],
+                    "Basic_sub":basic_sub,
                     "Date of subscribtion to end":user_data[4]
                 }
         except Exception as e:
@@ -222,17 +266,6 @@ async def get_me(username:str) -> dict:
         
 
 
-
-async def get_sub_date_end(username:str) -> str:
-    async with AsyncSession(async_engine) as conn:
-        try:
-            stmt = select(table.c.date).where(table.c.username == username)
-            res = await conn.execute(stmt)
-            data = res.scalar_one_or_none()
-            if data is not None:
-                return data
-        except Exception as e:
-            raise Exception(f"Error {e}")
 
 def cleanup():
     """Очистка при завершении"""
