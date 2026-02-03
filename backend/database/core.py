@@ -31,6 +31,10 @@ AsyncSessionLocal = sessionmaker(
     expire_on_commit=False
 )
 
+async def drop_table():
+    async with async_engine.begin() as conn:
+        await conn.run_sync(metadata_obj.drop_all)
+
 async def create_table():
     async with async_engine.begin() as conn:
         await conn.run_sync(metadata_obj.create_all)
@@ -240,7 +244,18 @@ async def get_last_ref_basic(username:str) -> str:
                 return str(data)
         except Exception as e:
             raise Exception(f"Error : {e}")
-
+        
+async def refil_zap(username:str):
+    if await is_user_subbed_basic(username):
+        async with AsyncSession(async_engine) as conn:
+            try:
+                stmt = table.update().where(table.c.username == username).values(
+                    zap = 50
+                )
+                await conn.execute(stmt)
+            except Exception as e:
+                raise Exception(f"Error : {e}")
+    
 
             
 
