@@ -72,4 +72,16 @@ async def change_to_sale(username:str):
                 )
                 await conn.execute(stmt)
             except Exception as e:
-                raise Exception(f"Error : {e}")            
+                raise Exception(f"Error : {e}")  
+            
+async def does_user_have_sale(username:str) -> bool :
+    async with AsyncSession(async_engine) as conn:
+        try:
+            stmt = select(sale_table.c.sale).where(sale_table.c.username == username)
+            res = await conn.execute(stmt)
+            data = res.scalar_one_or_none()
+            if data is not None:
+                return data
+            return False
+        except Exception as e:
+            raise Exception(f"Error : {e}")                     
