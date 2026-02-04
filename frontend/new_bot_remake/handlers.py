@@ -45,6 +45,22 @@ async def transform_date_to_int(date:str) -> int:
         for tm in str(date).split('-'):
             dt += tm
         return int(dt)
+
+async def refil_requests_basic_sub(username:str):
+    is_user_subbed_basic_flag = await is_user_subbed_basic(username)
+    if is_user_subbed_basic_flag:
+        date_now = datetime.now().date()
+        user_last_refil_date = await get_last_ref_basic(username)
+        
+        dt_int = transform_date_to_int(str(date_now))
+        last_ref_int = transform_date_to_int(str(user_last_refil_date))
+        
+        if dt_int > last_ref_int:
+            await refil_zap(username)
+            await upadate_last_ref_date(date_now)
+    else:
+        return
+       
         
 
 async def unsub_full_func(username:str) -> bool:
@@ -80,6 +96,7 @@ async def unsub_full_func(username:str) -> bool:
 async def profile_handler(message:Message):
     user_name = message.from_user.username
     user_id = message.from_user.id
+    await refil_requests_basic_sub(str(user_id))
     await change_user_state(str(user_id),False)
     res_unsub:bool = await unsub_full_func(str(user_id))
     if res_unsub:
@@ -233,6 +250,7 @@ async def back(message:Message):
 @router.message(F.text == "Reset Context")
 async def reset(message:Message):
     user_id = str(message.from_user.id)
+    await refil_requests_basic_sub(str(user_id))
     await message.answer(text = "Вы удалите все итсторию переписки,после этого ChatGPT создаст новый чат")
     await delete_all_messages(user_id)
     await message.answer(text = "✅ История отчищена.Можете продолжать пользоваться")
@@ -245,6 +263,7 @@ async def help(message:Message):
 
 @router.message(F.text == "Support")
 async def support_handler(message:Message):
+    
     await message.answer(text =  "Отправьте ваш вопрос вот этому пользователю : @kksndid_support")
         
 
@@ -254,6 +273,7 @@ async def support_handler(message:Message):
 async def chat_handler(message:Message):
     user_id = message.from_user.id
     await change_user_state(str(user_id),True)
+    await refil_requests_basic_sub(str(user_id))
     res_unsub:bool = await unsub_full_func(str(user_id))
     if res_unsub:
         await message.asnwer(text = "Ваша подписка закончилась.Что бы продолжить пользоваться премиум функционалом вам нужно снова ее оформить.Вы можете пользоваться ботом в пределе бесплатного тарифа.Благодарим за поддержку")
@@ -263,6 +283,7 @@ async def chat_handler(message:Message):
 @router.message(F.text & ~F.command)
 async def answer_messages(message:Message):
         user_state = await get_user_state(str(message.from_user.id))
+        await refil_requests_basic_sub(str(message.from_user.id))
         if user_state:
             user_id = message.from_user.id
             res_unsub:bool = await unsub_full_func(str(user_id))
@@ -394,6 +415,7 @@ def order_points(pts):
 @router.message(F.photo)
 async def answer_with_photo(message: Message):
     user_state = await get_user_state(str(message.from_user.id))
+    await refil_requests_basic_sub(str(message.from_user.id))
     if user_state:
         user_id = message.from_user.id
         res_unsub: bool = await unsub_full_func(str(user_id))
@@ -512,6 +534,7 @@ async def read_pdf(path:str) -> str:
 @router.message(F.document)
 async def answer_with_document(message: Message):
     user_state = await get_user_state(str(message.from_user.id))
+    await refil_requests_basic_sub(str(message.from_user.id))
     if user_state:
         user_id = message.from_user.id
         res_unsub: bool = await unsub_full_func(str(user_id))
