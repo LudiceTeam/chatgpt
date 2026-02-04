@@ -56,6 +56,20 @@ async def cretae_user_sale_table(username:str):
     async with AsyncSession(async_engine) as conn:
         async with conn.begin():
             try:
-                pass 
+                stmt = sale_table.insert().values(
+                    username = username,
+                    sale = False
+                )
+                await conn.execute(stmt)
             except Exception as e:
                 raise Exception(f"Error {e}")
+async def change_to_sale(username:str):
+    async with AsyncSession(async_engine) as conn:
+        async with conn.begin():
+            try:
+                stmt = sale_table.update().where(sale_table.c.username == username).values(
+                    sale = True
+                )
+                await conn.execute(stmt)
+            except Exception as e:
+                raise Exception(f"Error : {e}")            
