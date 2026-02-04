@@ -158,34 +158,12 @@ async def subscribe_hander(message:Message):
 @router.message(F.text == "Premium")
 async def premium_handler(message:Message):
   
-    buy_sub_text = """Лицензионное соглашение
-
-Настоящие условия оплаты регулируют порядок расчета за доступ к услугам искусственного интеллекта, предоставляемым компанией Ludice Team (далее — ChatGPT). 
-
-1. Тарифы и планы. 
-Клиент выбирает тариф по объему запросов, подписку с фиксированным лимитом или безлимитный доступ. Тарифы можно  посмотреть открыв одну из вкладок в меню приложения и могут обновляться с уведомлением за 30 дней. 
-
-2. Порядок оплаты. 
-Оплата производится заранее при активации тарифа или ежемесячно по дате подписки. При использовании пробного периода оплата взимается только по окончании бесплатной стадии, если клиент не отменил услугу. Прием платежей осуществляется Телеграмм-звездами или Юкассой
-
-3. Использование и лимиты. 
-Превышение установленного лимита по запросам в рамках выбранного тарифа приводит к начислению дополнительных платежей или автоматическому переходу на следующий план с уведомлением клиента. 
-
-4. Валюта и налоги. 
-Все платежи указаны в рублях; налог рассчитывается в соответствии с применимым законодательством Российской Федерации и добавляется к сумме на счете. 
-
-5. Просрочка и ответственность. 
-В случае задержки Сервис может приостанавливать доступ к сервису и взимать пени согласно политике. 
-
-6. Возврат средств. 
-Деньги, которыми были оплачены услуги возврату не подлежат.
-
-7. Изменение условий. Исполнитель вправе вносить изменения в условия оплаты с уведомлением клиента за 30 дней. Любые споры по оплате подлежат рассмотрению в арбитражном порядке и по месту нахождения Исполнителя настоящего.""" 
+    buy_sub_text = "1) Стоимость: 499 звезд / 30 дней. 2) Лимит: безлимитные запросы 3) Бонус: любая следующая покупка в боте будет со скидкой 10%"
     prices = [LabeledPrice(label="499 ⭐", amount=499)]
     
     await message.bot.send_invoice(
         chat_id=message.from_user.id,
-        title="Покупка Premium подписки",
+        title="Premium",
         description=buy_sub_text,
         payload="subscribtion",
         provider_token="410694247:TEST:48b50af2-4c6d-4c87-8d3f-6912d0d8c38a",
@@ -194,7 +172,25 @@ async def premium_handler(message:Message):
         reply_markup=kb.inline_pay
     )
     
+@router.message(F.text == "Basic")
+async def basic_sub_handler(message:Message):
     
+    buy_sub_text = "1) Стоимость: 199 звезд / 30 дней 2) Лимит: 25 запросов в день"
+    prices = [LabeledPrice(label="199 ⭐", amount=199)]
+    await message.bot.send_invoice(
+    chat_id=message.from_user.id,
+    title="Basic",
+    description=buy_sub_text,
+    payload="basic",
+    provider_token="410694247:TEST:48b50af2-4c6d-4c87-8d3f-6912d0d8c38a",
+    prices=prices,
+    currency="XTR",    
+    reply_markup=kb.inline_pay_basic 
+)
+    
+    
+    
+        
 
 @router.message(F.text == "Buy Requests")
 async def buy_req_handler(message:Message):
@@ -235,7 +231,11 @@ async def succesful_payment_handler(message:Message):
         await message.answer(text = f"✅ Вы купили {invoice[-1]} запросов. Спасибо за покупку. Приятного пользования.")
     elif "subscribtion" in payment.invoice_payload:
         await subscribe(user_id)
-        await message.answer("✅ Вы успешно подписались. Спасибо за покупку. Приятного пользования.")
+        await message.answer("✅ Вы успешно подписались на Premium подписку. Спасибо за покупку. Приятного пользования.")
+    elif "basic" in payment.invoice_payload:
+        await subscribe_basic(user_id)
+        await message.answer("✅ Вы успешно подписались на Basic. Спасибо за покупку. Приятного пользования.")
+            
     else:
         await message.answer("Что то пошло не так. Попробуйте снова.")
     

@@ -36,3 +36,8 @@ subscrition_keyborad = ReplyKeyboardMarkup(resize_keyboard=True,keyboard=[
     [KeyboardButton(text = "Premium"),KeyboardButton(text = "Basic")],
     [KeyboardButton(text = "Back")]
 ])
+
+
+inline_pay_basic = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text = "Pay 199 ⭐",pay = True)]
+])
