@@ -92,9 +92,6 @@ async def unsub_full_func(username:str) -> bool:
         return False
             
         
-async def count_sale(price:int) -> int:
-    sale:int = int(price * 0.1)
-    return price - sale
     
 
 @router.message(F.text == "Профиль")
@@ -168,12 +165,20 @@ async def profile_handler(message:Message):
 async def subscribe_hander(message:Message):
     await message.answer(text = "Выберете тип подписки",reply_markup=kb.subscrition_keyborad)
 
+
+async def count_sale(price:int) -> int:
+    sale:int = int(price * 0.1)
+    return price - sale
+
 @router.message(F.text == "Premium")
 async def premium_handler(message:Message):
     price = 499
-    user_has_sale = await 
-    buy_sub_text = "1) Стоимость: 499 звезд / 30 дней. 2) Лимит: безлимитные запросы 3) Бонус: любая следующая покупка в боте будет со скидкой 10%"
-    prices = [LabeledPrice(label="499 ⭐", amount=499)]
+    user_has_sale = await does_user_have_sale(str(message.from_user.id))
+    if user_has_sale:
+        price = await count_sale(price)
+        
+    buy_sub_text = f"1) Стоимость: {price} звезд / 30 дней. 2) Лимит: безлимитные запросы 3) Бонус: любая следующая покупка в боте будет со скидкой 10%"
+    prices = [LabeledPrice(label=f"{price} ⭐", amount=price)]
     
     await message.bot.send_invoice(
         chat_id=message.from_user.id,
@@ -188,9 +193,13 @@ async def premium_handler(message:Message):
     
 @router.message(F.text == "Basic")
 async def basic_sub_handler(message:Message):
+    price = 199
+    user_has_sale = await does_user_have_sale(str(message.from_user.id))
+    if user_has_sale:
+        price = await count_sale(price)
     
-    buy_sub_text = "1) Стоимость: 199 звезд / 30 дней 2) Лимит: 25 запросов в день"
-    prices = [LabeledPrice(label="199 ⭐", amount=199)]
+    buy_sub_text = f"1) Стоимость: {price} звезд / 30 дней 2) Лимит: 25 запросов в день"
+    prices = [LabeledPrice(label=f"{price} ⭐", amount=price)]
     await message.bot.send_invoice(
     chat_id=message.from_user.id,
     title="Basic",
