@@ -110,7 +110,7 @@ async def buy_zaproses(username:str,amount:int) -> bool:
             async with conn.begin():
                 stmt = select(table.c.zap).where(table.c.username == username)
                 res = await conn.execute(stmt)
-                data = await res.scalar_one_or_none()
+                data = res.scalar_one_or_none()
                 data_res = int(data) if data is not None else 0
                 update_stmt = table.update().where(table.c.username == username).values(zap = int(data_res) + amount)
                 await conn.execute(update_stmt)
@@ -308,7 +308,7 @@ async def add_referal(username:str):
                 update_stmt = table.update().where(table.c.username == username).values(
                     referal_count = referal_c + 1
                 )
-                await conn.execute(stmt)
+                await conn.execute(update_stmt)
             except Exception as e:
                 raise Exception(f"Error : {e}")
 

@@ -19,7 +19,7 @@ from docx import Document
 from doc_handler import extract_text_from_docx_with_images
 from backend.database.chats_database.chats_core import write_message,get_all_user_messsages,delete_all_messages
 from backend.api import ask_chat_gpt
-from backend.database.core import create_deafault_user_data,remove_free_zapros,check_free_zapros_amount,get_amount_of_zaproses,subscribe,set_sub_bac_to_false,get_me,is_user_subbed,buy_zaproses,get_sub_date_end,subscribe_basic,unsub_basic,is_user_subbed_basic,get_last_ref_basic,refil_zap,upadate_last_ref_date,is_user_exists
+from backend.database.core import create_deafault_user_data,remove_free_zapros,check_free_zapros_amount,get_amount_of_zaproses,subscribe,set_sub_bac_to_false,get_me,is_user_subbed,buy_zaproses,get_sub_date_end,subscribe_basic,unsub_basic,is_user_subbed_basic,get_last_ref_basic,refil_zap,upadate_last_ref_date,is_user_exists,get_user_referal_count,add_referal
 from datetime import timedelta,datetime
 from typing import List
 from backend.database.state_database.state_core import create_user_state,change_user_state,get_user_state
@@ -49,8 +49,11 @@ async def start_messsage(message:Message):
         if len(args) > 1:
             referal_id = args[1]
             if referal_id != str(user_id):
-                await buy_zaproses(str(referal_id))
+                await buy_zaproses(str(referal_id),5)
+                await add_referal(str(referal_id))
                 await message.answer(text = f"🎉 Вы зашли по ссылке друга!")
+                await message.answer(text = welcome_text,reply_markup=kb.main_keyboard)# вставить сюда норм текст            
+                
     else:
         await message.answer(text = welcome_text,reply_markup=kb.main_keyboard)# вставить сюда норм текст            
     
@@ -179,6 +182,34 @@ async def profile_handler(message:Message):
         await message.answer(
          new_profile_desc     
     )
+
+@router.message(F.text == "Реферальная прог")
+async def referal_prog(message:Message):
+    user_id = str(message.from_user.id)
+    user_referal_count = await get_user_referal_count(user_id)
+    referal_text = f"""📢 **РЕФЕРАЛЬНАЯ ПРОГРАММА**
+
+🎁 Приглашайте друзей и получайте бонусы!
+
+🔗 **Ваша реферальная ссылка:**
+https://t.me/character_ai_ludice_team_bot?start={user_id}
+
+👥 **Приглашено друзей:** {user_referal_count}
+
+🏆 **Ваши бонусы за приглашения:**
+
+✅ **За каждого друга:** +5 запросов к нейросети
+✅ **Первые 50 друзей:** Подписка Basic на 1 месяц!
+
+💡 **Как это работает:**
+1. Отправьте другу вашу реферальную ссылку
+2. Друг переходит и начинает пользоваться ботом
+3. Вы автоматически получаете бонусы!
+
+
+🚀 **Начните приглашать прямо сейчас!**"""
+    await message.answer(text = referal_text)
+        
 
 @router.message(F.text == "Подписаться")
 async def subscribe_hander(message:Message):

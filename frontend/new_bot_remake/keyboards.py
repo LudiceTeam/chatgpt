@@ -4,7 +4,7 @@ import sys
 from config import PROJECT_ROOT
 
 main_keyboard = ReplyKeyboardMarkup(resize_keyboard=True,keyboard=[
-    [KeyboardButton(text = "Чат"),KeyboardButton(text = "Профиль")],
+    [KeyboardButton(text = "Чат"),KeyboardButton(text = "Профиль"),KeyboardButton(text = "Реферальная прог")],
     [KeyboardButton(text = "Сбросить Контекст"),KeyboardButton(text = "Помощь"),KeyboardButton(text = "Поддержка")]
 ])
 
