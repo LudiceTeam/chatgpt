@@ -63,7 +63,8 @@ async def create_deafault_user_data(username:str) -> bool:
                         sub = False,
                         date = "",
                         basic_sub = False,
-                        last_ref = ""
+                        last_ref = "",
+                        referal_count = 0
                     )
                     await conn.execute(stmt)
                     return True
@@ -292,7 +293,36 @@ async def get_me(username:str) -> dict:
         except Exception as e:
             raise  Exception(f"Error : {e}") 
         
+#referal
 
+async def add_referal(username:str):
+    if not await is_user_exists(username):
+        return
+    async with AsyncSession(async_engine) as conn:
+        async with conn.begin():
+            try:
+                stmt = select(table.c.referal_count).where(table.c.username == username)
+                res = await conn.execute(stmt)
+                data = res.scalar_one_or_none()
+                referal_c = int(data) if data is not None else 0
+                update_stmt = table.update().where(table.c.username == username).values(
+                    referal_count = referal_c + 1
+                )
+                await conn.execute(stmt)
+            except Exception as e:
+                raise Exception(f"Error : {e}")
+
+async def get_user_referal_count(username:str) -> int:
+    if not await is_user_exists(username):
+        return
+    async with AsyncSession(async_engine) as conn:
+        try:
+            stmt = select(table.c.referal_count).where(table.c.username == username)
+            res = await conn.execute(stmt)
+            data = res.scalar_one_or_none()
+            return int(data) if data is not None else 0
+        except Exception as e:
+            raise Exception(f"Error : {e}")
 
 
 def cleanup():

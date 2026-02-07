@@ -12,5 +12,6 @@ table = Table("ai_girl_data",
               Column("sub",Boolean),
               Column("date",String),
               Column("basic_sub",Boolean),
-              Column("last_ref",String) # дата когда обновили запросы
+              Column("last_ref",String), # дата когда обновили запросы
+              Column("referal_count",Integer)
 )
