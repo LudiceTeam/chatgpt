@@ -558,7 +558,7 @@ async def answer_messages(message:Message):
                     await message.answer(text = response)        
                 await write_message(str(user_id),str(message.text),response)
         else:
-            await message.answer(text = "Команда не распознана.Что бы включить режим чата нажмите кнопку Чат.")
+            await message.answer(text="❌ Команда не распознана. Чтобы включить режим чата, нажмите кнопку «Чат».")
                     
  
 
@@ -778,7 +778,7 @@ async def answer_with_photo(message: Message):
                 await message.answer(text = response)
             await write_message(str(user_id), str(full_text), response)
     else:
-        await message.answer(text = "Команда не распознана.Что бы включить режим чата нажмите кнопку Чат.")        
+        await message.answer(text="❌ Команда не распознана. Чтобы включить режим чата, нажмите кнопку «Чат».")        
             
             
             
@@ -919,7 +919,7 @@ async def answer_with_document(message: Message):
         except Exception as e:
             raise Exception(f"Error : {e}")
     else:
-        await message.answer(text = "Команда не распознана.Что бы включить режим чата нажмите кнопку Чат.")    
+        await message.answer(text="❌ Команда не распознана. Чтобы включить режим чата, нажмите кнопку «Чат».")    
 
 
 
