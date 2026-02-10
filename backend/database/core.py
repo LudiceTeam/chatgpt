@@ -214,7 +214,7 @@ async def unsub_basic(username:str):
     async with AsyncSession(async_engine) as conn:
         async with conn.begin():
             try:
-                stmt = table.update().whree(table.c.username == username).values(
+                stmt = table.update().where(table.c.username == username).values(
                     basic_sub = False,
                     last_ref = "",
                     date = ""
