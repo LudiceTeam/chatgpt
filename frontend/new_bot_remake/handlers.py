@@ -978,3 +978,4 @@ async def answer_with_document(message: Message):
 
 
 # добавить иконки к кнопкам
+# добавить кеширование
