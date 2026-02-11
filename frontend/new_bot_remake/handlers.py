@@ -130,7 +130,12 @@ async def unsub_full_func(username:str) -> bool:
     else:
         return False
             
-        
+
+
+
+@router.startup()
+async def start_up():
+    await start_worker(5) 
     
 
 @router.message(F.text == "Профиль")
@@ -489,18 +494,25 @@ async def worker():
             future.set_result(response)
             
         except Exception as e:
-            raise Exception(f"Error : {e}")
+            future.set_exception(e)
+            print(f"Error : {e}")
         finally:
             gpt_queue.task_done()
 
-async def start_worker(count = 10):
+async def start_worker(count = 5):
     for i in range(count):
         asyncio.create_task(worker(),name = f"worker_{i}")
     print(f"✅ Запущено {count} воркеров")
 
 async def add_to_queue(user_id:str,request:str) -> str:
     future = asyncio.Future()
-    await gpt_queue.put((user_id, request, future))
+    try:
+        await asyncio.wait_for(
+            gpt_queue.put((user_id, request[:2000], future)), 
+            timeout=5.0
+        )
+    except asyncio.TimeoutError:
+        return "🔄 Очередь переполнена"
     try:
         result = await asyncio.wait_for(future,timeout=30)
         return result
@@ -1000,9 +1012,3 @@ async def answer_with_document(message: Message):
     else:
         await message.answer(text="❌ Команда не распознана. Чтобы включить режим чата, нажмите кнопку «Чат».")    
 
-
-
-
-@router.startup()
-async def start_up():
-    await start_worker(5)
