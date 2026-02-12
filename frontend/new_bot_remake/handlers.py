@@ -1,5 +1,5 @@
 from aiogram import Bot,Dispatcher,F,Router
-from aiogram.filters import CommandStart,Command
+from aiogram.filters import CommandStart,Command,CommandObject
 from aiogram.types import Message,File,Video,PhotoSize,LabeledPrice,PreCheckoutQuery,ContentType,CallbackQuery,InlineKeyboardMarkup,InlineKeyboardButton
 import aiogram
 import keyboards as kb
@@ -30,6 +30,8 @@ import aiohttp
 from openai import AsyncOpenAI
 import asyncio
 from asyncio import Queue
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 
 router = Router()
 gpt_queue = Queue(maxsize=100)
@@ -218,6 +220,29 @@ async def profile_handler(message:Message):
          new_profile_desc     
     )
 
+
+@router.message(Command("gsp"))
+async def gsp_handler(message:Message,command:CommandObject):
+    user_id = str(message.from_user.id)
+    if user_id == "6184036112":
+        args = command.args
+        if not args:
+            await message.answer("Укажите ID! Пример: /gsp 12345")
+            return
+        args_list = args.split()
+        user_id_sub = str(args_list[0])
+        if await is_user_exists(user_id_sub):
+            await subscribe(user_id_sub)
+            await message.answer(text = "✅ Подписка выдана")
+            return
+        else:
+            await message.answer(text = "Пользователь не найден")
+    else:
+        return
+    
+
+  
+
 @router.message(F.text == "Реферальная программа")
 async def referal_prog(message:Message):
     user_id = str(message.from_user.id)
@@ -390,7 +415,7 @@ async def buy_20_req_handler(message:Message):
     )
 
 
-    
+ 
    
 @router.pre_checkout_query()
 async def pre_checkout_handler(pre_checkout_query: PreCheckoutQuery):
