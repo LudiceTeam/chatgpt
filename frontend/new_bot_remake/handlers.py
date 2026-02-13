@@ -3,7 +3,6 @@ from aiogram.filters import CommandStart,Command,CommandObject
 from aiogram.types import Message,File,Video,PhotoSize,LabeledPrice,PreCheckoutQuery,ContentType,CallbackQuery,InlineKeyboardMarkup,InlineKeyboardButton
 import aiogram
 import keyboards as kb
-#from main import bot
 import sys
 import os
 import cv2
@@ -276,7 +275,8 @@ https://t.me/character_ai_ludice_team_bot?start={user_id}
 ✅ Активна 30 дней"""
         await message.answer(text = ref_text)    
         
-        
+async def sent_user_long_time():
+    pass         
 
 @router.message(F.text == "Подписаться")
 async def subscribe_hander(message:Message):
@@ -636,7 +636,7 @@ async def answer_messages(message:Message):
                         await think_message.delete()
                         await message.answer(text = "У вас не осталось бесплатных запросов.Купить подписку вы можете перейдя в профиль")
                 else:
-                    response = await add_to_queue(str(user_id),f"Вот все сообщение пользователя что бы тебе было легче его понимать : {user_messages},это его история сообщений что бы ты его понимал.Ты отвечаешь кратко и по делу. А вот его текущие сообщение : {str(message.text)}")
+                    response = await add_to_queue(str(user_id),f"Вот все сообщение пользователя что бы тебе было легче его понимать : {user_messages},это его история сообщений что бы ты его понимал.Ты отвечаешь кратко и по делу. А вот его текущие сообщение : {str(message.text)},ты должен отвечать на его текущее сообщение основываясь на его истории")
                     await remove_free_zapros(str(user_id))
                     try:
                         await think_message.delete()
@@ -653,7 +653,7 @@ async def answer_messages(message:Message):
                         await message.answer(text = response)        
                     await write_message(str(user_id),str(message.text),response)
             else:
-                response = await add_to_queue(str(user_id),f"Вот все сообщение пользователя что бы тебе было легче его понимать : {user_messages},это его история сообщений что бы ты его понимал.Ты отвечаешь кратко и по делу. А вот его текущие сообщение : {str(message.text)}")
+                response = await add_to_queue(str(user_id),f"Вот все сообщение пользователя что бы тебе было легче его понимать : {user_messages},это его история сообщений что бы ты его понимал.Ты отвечаешь кратко и по делу. А вот его текущие сообщение : {str(message.text)},ты должен отвечать на его текущее сообщение основываясь на его истории")
                 try:
                     await think_message.delete()
                 except Exception as e:
@@ -858,7 +858,7 @@ async def answer_with_photo(message: Message):
                     await message.answer(text = "У вас не осталось бесплатных запросов.Купить подписку вы можете перейдя в профиль")
             else:
                 full_text: str = str(message.text) + "\n" + (message.caption or "") + "\n" + result_text
-                response = await add_to_queue(str(user_id),f"Вот все сообщение пользователя что бы тебе было легче его понимать : {user_messages},это его история сообщений что бы ты его понимал.Ты отвечаешь кратко и по делу. А вот его текущие сообщение : {str(message.text)}")
+                response = await add_to_queue(str(user_id),f"Вот все сообщение пользователя что бы тебе было легче его понимать : {user_messages},это его история сообщений что бы ты его понимал.Ты отвечаешь кратко и по делу. А вот его текущие сообщение : {full_text},ты должен отвечать на его текущее сообщение основываясь на его истории")
                 await remove_free_zapros(str(user_id))
                 try:
                     await think_message.delete()
@@ -877,7 +877,7 @@ async def answer_with_photo(message: Message):
                
         else:
             full_text: str = str(message.text) + "\n" + (message.caption or "") + "\n" + result_text
-            response = await add_to_queue(str(user_id),f"Вот все сообщение пользователя что бы тебе было легче его понимать : {user_messages},это его история сообщений что бы ты его понимал.Ты отвечаешь кратко и по делу. А вот его текущие сообщение : {str(message.text)}")
+            response = await add_to_queue(str(user_id),f"Вот все сообщение пользователя что бы тебе было легче его понимать : {user_messages},это его история сообщений что бы ты его понимал.Ты отвечаешь кратко и по делу. А вот его текущие сообщение : {full_text},ты должен отвечать на его текущее сообщение основываясь на его истории")
             try:
                 await think_message.delete()
             except Exception as e:
@@ -1001,7 +1001,7 @@ async def answer_with_document(message: Message):
                         await message.answer(text = "У вас не осталось бесплатных запросов.Купить подписку вы можете перейдя в профиль или просто докупить запросы.")
                 else:
                     full_text: str = str(message.text) + "\n" + str(message.caption) + "\n" + text
-                    response = await add_to_queue(str(user_id),f"Вот все сообщение пользователя что бы тебе было легче его понимать : {user_messages},это его история сообщений что бы ты его понимал.Ты отвечаешь кратко и по делу. А вот его текущие сообщение : {str(message.text)}")
+                    response = await add_to_queue(str(user_id),f"Вот все сообщение пользователя что бы тебе было легче его понимать : {user_messages},это его история сообщений что бы ты его понимал.Ты отвечаешь кратко и по делу. А вот его текущие сообщение : {full_text},ты должен отвечать на его текущее сообщение основываясь на его истории")
                     await remove_free_zapros(str(user_id))
                     try:
                         await think_message.delete()
@@ -1018,7 +1018,7 @@ async def answer_with_document(message: Message):
                     await write_message(str(user_id), str(full_text), response)
             else:
                 full_text = str(message.text) + "\n" + str(message.caption) + "\n" + text
-                response = await add_to_queue(str(user_id),f"Вот все сообщение пользователя что бы тебе было легче его понимать : {user_messages},это его история сообщений что бы ты его понимал.Ты отвечаешь кратко и по делу. А вот его текущие сообщение : {str(message.text)}")
+                response = await add_to_queue(str(user_id),f"Вот все сообщение пользователя что бы тебе было легче его понимать : {user_messages},это его история сообщений что бы ты его понимал.Ты отвечаешь кратко и по делу. А вот его текущие сообщение : {full_text},ты должен отвечать на его текущее сообщение основываясь на его истории")
                 try:
                     await think_message.delete()
                 except Exception as e:
