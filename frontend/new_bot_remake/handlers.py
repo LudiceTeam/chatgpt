@@ -679,86 +679,96 @@ async def answer_messages(message:Message):
         else:
             await message.answer(text="❌ Команда не распознана. Чтобы включить режим чата, нажмите кнопку «Чат».")
                     
- 
+class BestFreeOCR:
+    """Твой текущий OCR на EasyOCR"""
+    
+    def __init__(self):
+        # Загружаем модель 1 раз при старте
+        self.reader = easyocr.Reader(['ru', 'en'], gpu=False)
+        self.executor = ThreadPoolExecutor(max_workers=1)
+        
+    async def extract_text(self, image_bytes: bytes) -> str:
+        """Асинхронное распознавание"""
+        loop = asyncio.get_event_loop()
+        try:
+            text = await loop.run_in_executor(
+                self.executor,
+                self._process_image,
+                image_bytes
+            )
+            return text
+        except Exception as e:
+            print(f"OCR error: {e}")
+            return ""
+    
+    def _process_image(self, image_bytes: bytes) -> str:
+        """Обработка изображения"""
+        
+        # Загружаем фото
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        if img is None:
+            return ""
+        
+        # 1. Увеличиваем для лучшего распознавания
+        height, width = img.shape[:2]
+        if max(height, width) < 1000:
+            scale = 1500 / max(height, width)
+            img = cv2.resize(img, None, fx=scale, fy=scale)
+        
+        # 2. Конвертируем в ч/б
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        
+        # 3. Убираем шум
+        denoised = cv2.fastNlMeansDenoising(gray, h=30)
+        
+        # 4. Усиливаем контраст
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+        enhanced = clahe.apply(denoised)
+        
+        # 5. EasyOCR распознает текст
+        results = self.reader.readtext(
+            enhanced,
+            paragraph=True,  # Объединяем в параграфы
+            detail=0,        # Только текст, без координат
+            batch_size=1,    # Быстро
+            contrast_ths=0.3, # Настройки для плохих фото
+            adjust_contrast=0.5
+        )
+        
+        # Объединяем результаты
+        text = " ".join(results)
+        
+        # 6. Чистим текст
+        text = self._clean_text(text)
+        
+        return text.strip()
+    
+    def _clean_text(self, text: str) -> str:
+        """Чистка текста"""
+        # Убираем лишние пробелы
+        text = re.sub(r'\s+', ' ', text)
+        
+        # Исправляем типичные ошибки
+        fixes = {
+            ' 4 ': ' А ',
+            ' B ': ' В ',
+            ' 0 ': ' О ',
+            'кмч': 'км/ч',
+            'км/ч': 'км/ч',
+        }
+        
+        for wrong, correct in fixes.items():
+            text = text.replace(wrong, correct)
+        
+        return text
 
-async def extract_text_from_image_new(image_bytes: bytes) -> str:
-   
-    nparr = np.frombuffer(image_bytes, np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    
-    if img is None:
-        return ""
-    
-   
-    height, width = img.shape[:2]
-    if max(height, width) > 800:
-        scale = 800 / max(height, width)
-        img = cv2.resize(img, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
-    
-   
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    enhanced = clahe.apply(gray)
-    
-   
-    texts = []
-    
+# ============ ИСПОЛЬЗОВАНИЕ В БОТЕ ============
 
-    result1 = reader.readtext(enhanced, paragraph=True, detail=0)
-    if result1:
-        texts.append("\n".join(result1))
-    
-   
-    result2 = reader.readtext(enhanced, paragraph=False, detail=0)
-    if result2:
-        texts.append("\n".join(result2))
-    
- 
-    result3 = reader.readtext(img, paragraph=True, detail=0)
-    if result3:
-        texts.append("\n".join(result3))
-    
-   
-    if texts:
-        best_text = max(texts, key=len)
-        return best_text.strip()
-    
-    return ""
+# Создаем глобальный экземпляр
+ocr = BestFreeOCR()
 
-def four_point_transform(image, pts):
-    """Выравнивает перспективу по 4 точкам"""
-    rect = order_points(pts)
-    (tl, tr, br, bl) = rect
-    
-    widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
-    widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
-    maxWidth = max(int(widthA), int(widthB))
-    
-    heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
-    heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
-    maxHeight = max(int(heightA), int(heightB))
-    
-    dst = np.array([
-        [0, 0],
-        [maxWidth - 1, 0],
-        [maxWidth - 1, maxHeight - 1],
-        [0, maxHeight - 1]], dtype="float32")
-    
-    M = cv2.getPerspectiveTransform(rect, dst)
-    warped = cv2.warpPerspective(image, M, (maxWidth, maxHeight))
-    return warped
-
-def order_points(pts):
-  
-    rect = np.zeros((4, 2), dtype="float32")
-    s = pts.sum(axis=1)
-    rect[0] = pts[np.argmin(s)]
-    rect[2] = pts[np.argmax(s)]
-    
-    diff = np.diff(pts, axis=1)
-    rect[1] = pts[np.argmin(diff)]
-    rect[3] = pts[np.argmax(diff)]
-    return rect
 
 async def is_user_has_free_req(username:str) -> bool:
     is_user_subbed_flag:bool = await is_user_subbed(username)
@@ -820,7 +830,7 @@ async def answer_with_photo(message: Message):
         image_bytes = image_bytes.getvalue()
        
       
-        result_text = await extract_text_from_image_new(image_bytes)
+        result_text = await ocr.extract_text(image_bytes)
         
         await message.answer(text = f"Вот текст с картинки  : {result_text}")
         
