@@ -273,10 +273,15 @@ https://t.me/character_ai_ludice_team_bot?start={user_id}
         ref_text = """✅ Basic подписка получена!
 ✅ Награда за 5 приглашённых друзей
 ✅ Активна 30 дней"""
-        await message.answer(text = ref_text)    
-        
-async def sent_user_long_time():
-    pass         
+        await message.answer(text = ref_text) 
+    res_unsub: bool = await unsub_full_func(str(user_id))
+    if res_unsub:
+        await message.answer( text="📅 Ваша подписка закончилась.\n\n"
+        "🔓 Чтобы продолжить пользоваться платным функционалом, вам нужно оформить её снова.\n\n"
+        "🆓 Вы можете пользоваться ботом в пределах бесплатного тарифа.\n\n"
+        "Благодарим за поддержку!")  
+    
+     
 
 @router.message(F.text == "Подписаться")
 async def subscribe_hander(message:Message):
