@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 import asyncpg
 import os
 from dotenv import load_dotenv
-from backend.database.long_time_database.long_time_models import metadata_obj,main_table
+from long_time_models import metadata_obj,main_table
 import asyncio
 import atexit
 
@@ -101,4 +101,3 @@ async def all_users_who_needs_to_recieve_message() -> List[str]:
         except Exception as e:
             raise Exception(f"Error : {e}")            
                        
-asyncio.run(create_table())
