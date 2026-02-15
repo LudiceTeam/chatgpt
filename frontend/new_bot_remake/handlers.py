@@ -37,6 +37,7 @@ import pytesseract
 from concurrent.futures import ThreadPoolExecutor
 from PIL import Image
 import io
+from backend.database.long_time_database.long_time_core import default_long_time,update_last_time
 
 router = Router()
 gpt_queue = Queue(maxsize=100)
@@ -68,7 +69,7 @@ async def start_messsage(message:Message):
                 
     else:
         await message.answer(text = welcome_text,reply_markup=kb.main_keyboard)# вставить сюда норм текст            
-    
+    await default_long_time(str(user_id))
     await create_deafault_user_data(str(user_id))
     await create_user_state(str(user_id))
     await cretae_user_sale_table(str(user_id))
@@ -151,6 +152,7 @@ async def profile_handler(message:Message):
     user_id = message.from_user.id
     await refil_requests_basic_sub(str(user_id))
     await change_user_state(str(user_id),False)
+    await update_last_time(str(user_id))
     res_unsub:bool = await unsub_full_func(str(user_id))
     if res_unsub:
         await message.answer( text="📅 Ваша подписка закончилась.\n\n"
@@ -252,6 +254,7 @@ async def gsp_handler(message:Message,command:CommandObject):
 async def referal_prog(message:Message):
     user_id = str(message.from_user.id)
     user_referal_count = await get_user_referal_count(user_id)
+    await update_last_time(str(user_id))
     referal_text = f"""📢 **РЕФЕРАЛЬНАЯ ПРОГРАММА**
 
 🎁 Приглашайте друзей и получайте бонусы!
@@ -467,6 +470,7 @@ async def reset(message:Message):
     user_id = str(message.from_user.id)
     await refil_requests_basic_sub(str(user_id))
     await delete_all_messages(user_id)
+    await update_last_time(str(user_id))
     await message.answer(text = "✅ История отчищена.")
 
 @router.message(F.text == "Помощь")
@@ -511,13 +515,16 @@ async def help(message:Message):
 
 Для навигации используйте кнопки меню 👇
 """
+    user_id:str = str(message.from_user.id)
+    await update_last_time(str(user_id))
     await message.answer(text = help_text)
 
 
 
 @router.message(F.text == "Поддержка")
 async def support_handler(message:Message):
-    
+    user_id = str(message.from_user.id)
+    await update_last_time(str(user_id))
     await message.answer(text =  "Отправьте ваш вопрос вот этому пользователю : @kksndid_support")
         
 
@@ -563,6 +570,7 @@ async def chat_handler(message:Message):
     user_id = message.from_user.id
     await change_user_state(str(user_id),True)
     await refil_requests_basic_sub(str(user_id))
+    await update_last_time(str(user_id))
     res_unsub:bool = await unsub_full_func(str(user_id))
     if res_unsub:
         await message.answer( text="📅 Ваша подписка закончилась.\n\n"
@@ -617,6 +625,7 @@ async def answer_messages(message:Message):
         await refil_requests_basic_sub(str(message.from_user.id))
         if user_state:
             user_id = message.from_user.id
+            await update_last_time(str(user_id))
             res_unsub:bool = await unsub_full_func(str(user_id))
             if res_unsub:
                 await message.answer( text="📅 Ваша подписка закончилась.\n\n"
@@ -788,6 +797,7 @@ async def answer_with_photo(message: Message):
     await refil_requests_basic_sub(str(message.from_user.id))
     if user_state:
         user_id = message.from_user.id
+        await update_last_time(str(user_id))
         res_unsub: bool = await unsub_full_func(str(user_id))
         
         has_req:bool = await is_user_has_free_req(str(user_id))
@@ -925,6 +935,7 @@ async def answer_with_document(message: Message):
     await refil_requests_basic_sub(str(message.from_user.id))
     if user_state:
         user_id = message.from_user.id
+        await update_last_time(str(user_id))
         res_unsub: bool = await unsub_full_func(str(user_id))
         if res_unsub:
             await message.answer( text="📅 Ваша подписка закончилась.\n\n"
