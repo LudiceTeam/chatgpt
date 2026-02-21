@@ -542,7 +542,7 @@ async def worker():
         finally:
             gpt_queue.task_done()
 
-async def start_worker(count = 50):
+async def start_worker(count = 5):
     for i in range(count):
         asyncio.create_task(worker(),name = f"worker_{i}")
     print(f"✅ Запущено {count} воркеров")
