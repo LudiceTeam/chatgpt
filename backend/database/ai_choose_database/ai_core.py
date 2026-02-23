@@ -63,7 +63,17 @@ async def is_user_exists(username:str)  -> bool:
 
 async def create_default_user_model_name(username:str):
     if await is_user_exists(username):
-        return        
+        return 
+    async with AsyncSession(async_engine) as conn:
+        async with conn.begin():
+            try:
+                stmt = ai_table.insert().values(
+                    username = username,
+                    ai_name = "google/gemini-3-flash-preview"
+                )
+                await conn.execute(stmt)
+            except Exception as e:
+                raise Exception(f"Error : {e}")       
 
 
 async def get_user_model_name(username:str) -> str:
@@ -80,6 +90,16 @@ async def get_user_model_name(username:str) -> str:
 
 
 
-async def change_user_model_name(username:str):
-    pass        
+async def change_user_model_name(username:str,new_ai_name:str):
+    if not await is_user_exists(username):
+        return
+    async with AsyncSession(async_engine) as conn:
+        async with conn.begin():
+            try:
+                stmt = ai_table.update().where(ai_table.c.username == username).values(
+                    ai_name = new_ai_name
+                )
+                await conn.execute(stmt)
+            except Exception as e:
+                raise Exception(f"Error : {e}")    
         
