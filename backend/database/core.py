@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from backend.database.models import metadata_obj,table
 import asyncio
 import atexit
+from sqlalchemy import func
 #backend.database.
 
 
@@ -69,7 +70,16 @@ async def create_deafault_user_data(username:str) -> bool:
                     await conn.execute(stmt)
                     return True
         except Exception as e:
-            raise Exception(f"Error : {e}")       
+            raise Exception(f"Error : {e}")  
+        
+async def count_all_users() -> int:
+    async with AsyncSession(async_engine) as conn:
+        try:
+            stmt = select(func.count()).select_from(table)
+            res = await conn.execute(stmt)
+            return res.scalar_one_or_none()
+        except Exception as e:
+            raise Exception(f"Error : {e}")             
 
 async def remove_free_zapros(username:str) -> bool:
     if not await is_user_exists(username):
