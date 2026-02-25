@@ -68,10 +68,10 @@ async def start_messsage(message:Message):
                 await add_referal(str(referal_id))
                 await message.answer(text = f"🎉 Вы зашли по ссылке друга!")
                 
-        await message.answer(text = welcome_text,reply_markup=kb.main_keyboard)# вставить сюда норм текст            
+        await message.answer(text = welcome_text)# вставить сюда норм текст            
                 
     else:
-        await message.answer(text = welcome_text,reply_markup=kb.main_keyboard)# вставить сюда норм текст            
+        await message.answer(text = welcome_text)# вставить сюда норм текст            
     await default_long_time(str(user_id))
     await create_deafault_user_data(str(user_id))
     await create_user_state(str(user_id))
@@ -150,7 +150,7 @@ async def start_up():
     await start_worker(5) 
     
 
-@router.message(F.text == "Профиль")
+@router.message(Command("profile"))
 async def profile_handler(message:Message):
     user_name = message.from_user.username
     user_id = message.from_user.id
@@ -234,6 +234,25 @@ async def profile_handler(message:Message):
 
 @router.message(Command("gsp"))
 async def gsp_handler(message:Message,command:CommandObject):
+    user_id = str(message.from_user.id)
+    if user_id == "6184036112":
+        args = command.args
+        if not args:
+            await message.answer("Укажите ID! Пример: /gsp 12345")
+            return
+        args_list = args.split()
+        user_id_sub = str(args_list[0])
+        if await is_user_exists(user_id_sub):
+            await subscribe(user_id_sub)
+            await message.answer(text = "✅ Подписка выдана")
+            return
+        else:
+            await message.answer(text = "Пользователь не найден")
+    else:
+        return
+
+@router.message(Command("rms"))
+async def remove_sub_from_user(message:Message,command:CommandObject):
     user_id = str(message.from_user.id)
     if user_id == "6184036112":
         args = command.args

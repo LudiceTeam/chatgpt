@@ -8,9 +8,9 @@ main_keyboard = ReplyKeyboardMarkup(resize_keyboard=True,keyboard=[
     [KeyboardButton(text = "Сбросить Контекст"),KeyboardButton(text = "Помощь"),KeyboardButton(text = "Поддержка"),KeyboardButton(text = "Выбрать Модель")]
 ])
 
-profile_key_borad = ReplyKeyboardMarkup(resize_keyboard=True,keyboard=[
-    [KeyboardButton(text = "Подписаться"),KeyboardButton(text = "Купить Запросы")],
-    [KeyboardButton(text = "Назад")]
+profile_key_borad = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text = "Подписаться",callback_data = "subscribe")],
+    [InlineKeyboardButton(text = "Купить Запросы",callback_data = "buy_requests")]
 ])
 
 
