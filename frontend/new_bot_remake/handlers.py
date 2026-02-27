@@ -568,7 +568,7 @@ async def worker():
         user_id,request,future = await gpt_queue.get()
         
         try:
-            response = await ask_chat_gpt(request)
+            response = await ask_chat_gpt(request,user_id)
             future.set_result(response)
             
         except Exception as e:
@@ -605,9 +605,9 @@ async def get_user_models_keyboard(user_id:str):
         ("google/gemini-2.5-flash", "Gemini 2.5 Flash"),
         ("openai/gpt-4", "GPT-4"),
         ("openai/gpt-4-turbo", " GPT-4 Turbo"),
-        ("openai/gpt-3.5-turbo", "GPT-3.5 Turbo"),
-        ("xai/grok-1", "Grok 1"),
-        ("xai/grok-1.5", "Grok 1.5"),
+        ("anthropic/claude-opus-4.6", "Claude Opus"),
+        ("anthropic/claude-sonnet-4.6", "Cloude Sonnet"),
+        ("mistralai/mistral-large", "Mistral Large"),
         ("deepseek/deepseek-chat", "DeepSeek Chat"),
     ]
     user_model = await get_user_model_name(user_id)
@@ -638,7 +638,7 @@ async def choose_model_handler(message:Message):
         )
 
 
-@router.callback_query(F.data.startswith(("google/", "openai/", "xai/", "deepseek/")))
+@router.callback_query(F.data.startswith(("google/", "openai/", "anthropic/", "deepseek/","mistralai/")))
 async def ai_change_handler(callback:CallbackQuery):
     user_id = str(callback.from_user.id)
     await change_user_model_name(user_id,callback.data)
@@ -681,12 +681,14 @@ client = AsyncOpenAI(
     max_retries=2
 )
 
-async def ask_chat_gpt(request: str) -> str:
+async def ask_chat_gpt(request: str,user_id:str) -> str:
     try:
         request = request[:10000]
         
+        user_model = await get_user_model_name(user_id)
+        
         response = await client.chat.completions.create(  # <-- ВАЖНО: используем chat.completions
-            model="google/gemini-3-flash-preview",  # <-- ПРАВИЛЬНОЕ имя модели
+            model=user_model,  # <-- ПРАВИЛЬНОЕ имя модели
             messages=[
                 {"role": "user", "content": request}
             ]
