@@ -40,6 +40,7 @@ import io
 from backend.database.long_time_database.long_time_core import default_long_time,update_last_time
 from backend.database.ai_choose_database.ai_core import get_user_model_name,create_default_user_model_name,change_user_model_name
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from backend.database.nano_banana.nano_core import create_default_user_data_nano,minus_one_req_nano,get_user_req_nano,refil_user_amount_nano
 
 router = Router()
 gpt_queue = Queue(maxsize=100)

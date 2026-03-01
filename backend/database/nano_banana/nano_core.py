@@ -6,11 +6,12 @@ from sqlalchemy.orm import sessionmaker
 import asyncpg
 import os
 from dotenv import load_dotenv
-from nano_models import metadata_obj,nano_table
+from backend.database.nano_banana.nano_models import metadata_obj,nano_table
 import asyncio
 import atexit
 from sqlalchemy import func
 
+#backend.database.nano_banana.
 
 
 load_dotenv()
@@ -51,7 +52,7 @@ async def is_user_exists(username:str) -> bool:
            return True
        return False 
 
-async def create_default_user_data(username:str):
+async def create_default_user_data_nano(username:str):
     if  await is_user_exists(username):
         return
     async with AsyncSession(async_engine) as conn:
@@ -65,7 +66,7 @@ async def create_default_user_data(username:str):
         except Exception as e:
             raise Exception(f"Error : {e}")
 
-async def minus_one_req(username:str):
+async def minus_one_req_nano(username:str):
     if not await is_user_exists(username):
         return
     async with AsyncSession(async_engine) as conn:
@@ -78,7 +79,7 @@ async def minus_one_req(username:str):
         except Exception as e:
             raise Exception(f"Error : {e}")
 
-async def get_user_req(username:str) -> int:
+async def get_user_req_nano(username:str) -> int:
     if not await is_user_exists(username):
         return
     async with AsyncSession(async_engine) as conn:
@@ -91,7 +92,7 @@ async def get_user_req(username:str) -> int:
             raise Exception(f"Error : {e}")
 
 
-async def refil_user_amount(username:str,amount:int):
+async def refil_user_amount_nano(username:str,amount:int):
     if not await is_user_exists(username):
         return
     async with AsyncSession(async_engine) as conn:
@@ -103,7 +104,5 @@ async def refil_user_amount(username:str,amount:int):
                 await conn.execute(stmt)
             except Exception as e:
                 raise Exception(f"Error : {e}")      
-        
-
-   
+           
    
