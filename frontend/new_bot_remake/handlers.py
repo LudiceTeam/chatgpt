@@ -1,6 +1,6 @@
 from aiogram import Bot,Dispatcher,F,Router
 from aiogram.filters import CommandStart,Command,CommandObject
-from aiogram.types import Message,File,Video,PhotoSize,LabeledPrice,PreCheckoutQuery,ContentType,CallbackQuery,InlineKeyboardMarkup,InlineKeyboardButton
+from aiogram.types import Message,File,Video,PhotoSize,LabeledPrice,PreCheckoutQuery,ContentType,CallbackQuery,InlineKeyboardMarkup,InlineKeyboardButton,BufferedInputFile 
 import aiogram
 import keyboards as kb
 import sys
@@ -517,7 +517,7 @@ async def start_worker(count = 5):
         asyncio.create_task(worker(),name = f"worker_{i}")
     print(f"✅ Запущено {count} воркеров")
 
-async def add_to_queue(user_id:str,request:str) -> str:
+async def add_to_queue(user_id:str,request:str) -> str | bytes:
     future = asyncio.Future()
     try:
         await asyncio.wait_for(
@@ -544,6 +544,7 @@ async def get_user_models_keyboard(user_id:str):
         ("anthropic/claude-sonnet-4.6", "Cloude Sonnet"),
         ("mistralai/mistral-large", "Mistral Large"),
         ("deepseek/deepseek-chat", "DeepSeek Chat"),
+        ("google/gemini-3-pro-image-preview","Nano Banana")
     ]
     user_model = await get_user_model_name(user_id)
     for data,model_button_text in models:
@@ -624,7 +625,7 @@ async def ask_chat_gpt(request: str,user_id:str) -> str | bytes:
         
         user_model = await get_user_model_name(user_id)
         
-        if user_model == "google/gemini-2.5-flash-image-preview:free":
+        if user_model == "google/gemini-3-pro-image-preview":
             response = await client.chat.completions.create(
             model=user_model,
             messages=[
@@ -644,11 +645,21 @@ async def ask_chat_gpt(request: str,user_id:str) -> str | bytes:
         )
             message = response.choices[0].message
             if hasattr(message, 'images') and message.images:
-                img_data = message.images[0]
-                base64_str = img_data.split(',')[1]
-                image_bytes = base64.b64decode(base64_str)
-                return image_bytes
-            return f"🤔 Нет изображения в ответе. Текст: {text_result}"
+                img_dict = message.images[0]
+                if 'image_url' in img_dict:
+                    img_data = img_dict['image_url']  # <-- ВОТ ТАК ПРАВИЛЬНО!
+                    
+                    true_img_data = img_data["url"]
+                   
+                    if ',' in true_img_data:
+                        base64_str = true_img_data.split(',')[1]
+                    else:
+                        base64_str = true_img_data
+                    
+                    
+                    image_bytes = base64.b64decode(base64_str)
+                    return image_bytes
+            return f"🤔 Нет изображения в ответе."
             
         response = await client.chat.completions.create(  # <-- ВАЖНО: используем chat.completions
             model=user_model,  # <-- ПРАВИЛЬНОЕ имя модели
@@ -705,6 +716,29 @@ async def answer_messages(message:Message):
 Задача: Ответь на текущее сообщение пользователя, опираясь на историю переписки. Сохраняй релевантность и последовательность диалога.
 Забудь про Markdown, JSON и любой другой синтаксис. Отвечай обычным человеческим текстом, как в переписке. Без звездочек, решеток, кавычек, блоков кода и форматирования. Если нужно записать уравнение или пример — пиши его в строчку обычными символами, например: x2 + 2x - 3 = 0 или 3 * 4 = 12. Главное правило: никаких спецсимволов для оформления, только текст."""
         
+        user_model = await get_user_model_name(str(user_id))
+        if user_model == "google/gemini-3-pro-image-preview":
+            user_nano_req = await get_user_req_nano(str(user_id))
+            #user_subbed = await is_user_subbed(str(user_id))
+            if user_nano_req == 0:
+                await message.answer(text = "У вас не осталось запросов к Nano Banana.")
+                return
+            
+            response = await add_to_queue(str(user_id),str(message.text))
+            if type(response) == str:
+                await message.answer(text = response)
+            elif type(response) == bytes:
+                await message.answer_photo(
+                    photo=BufferedInputFile(
+                        file=response,
+                        filename="image.png"
+                    ),
+                    caption=f"Промт: {str(message.text)}"
+                )
+            await minus_one_req_nano(str(user_id))    
+            return
+                
+            
         if not is_user_subbed_:
             user_free_req = await get_amount_of_zaproses(str(user_id))
             user_basic_sub = await is_user_subbed_basic(str(user_id))
