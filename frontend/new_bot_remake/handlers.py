@@ -974,34 +974,23 @@ async def answer_with_photo(message: Message):
     
     is_user_subbed_ = await is_user_subbed(str(user_id))
     
-    if not is_user_subbed_:
-        user_free_req = await get_amount_of_zaproses(str(user_id))
-        user_basic_sub = await is_user_subbed_basic(str(user_id))
-        if user_free_req == 0:
-            if user_basic_sub:
-                await think_message.delete()
-                await message.answer(text = "У вас на сегодня закончились запросы.Попробуйте завтра")
-            else:
-                await think_message.delete()
-                await message.answer(text = "У вас не осталось бесплатных запросов.Купить подписку вы можете по команде /pay")
+    if not is_user_subbed_:  
+        response = await add_to_queue(str(user_id),promt)
+        await remove_free_zapros(str(user_id))
+        try:
+            await think_message.delete()
+        except Exception as e:
+            raise Exception(f"Error: {e}")
+        await asyncio.sleep(0.5)
+        
+        
+        if len(response) > 4096:
+            for i in range(0,len(response),4096):
+                part = response[i:i + 4096]
+                await message.answer(text = part)
         else:
-            
-            response = await add_to_queue(str(user_id),promt)
-            await remove_free_zapros(str(user_id))
-            try:
-                await think_message.delete()
-            except Exception as e:
-                raise Exception(f"Error: {e}")
-            await asyncio.sleep(0.5)
-            
-            
-            if len(response) > 4096:
-                for i in range(0,len(response),4096):
-                    part = response[i:i + 4096]
-                    await message.answer(text = part)
-            else:
-                await message.answer(text = response)        
-            await write_message(str(user_id), str(full_text), response)
+            await message.answer(text = response)        
+        await write_message(str(user_id), str(full_text), response)
             
     else:
         #full_text: str = str(message.text) + "\n" + (message.caption or "") + "\n" + result_text
@@ -1152,31 +1141,22 @@ async def answer_with_document(message: Message):
             
         is_user_subbed_ = await is_user_subbed(str(user_id))
         if not is_user_subbed_:
-            user_req = await get_amount_of_zaproses(str(user_id))
-            user_basic_sub = await is_user_subbed_basic(str(user_id))
-            if user_req == 0:
-                if user_basic_sub:
-                    await think_message.delete()
-                    await message.answer(text = "У вас на сегодня закончились запросы.Попробуйте снова завтра")
-                else:
-                    await think_message.delete()
-                    await message.answer(text = "У вас не осталось бесплатных запросов.Купить подписку вы можете по команде /pay")
+            
+            response = await add_to_queue(str(user_id),promt)
+            await remove_free_zapros(str(user_id))
+            try:
+                await think_message.delete()
+            except Exception as e:
+                raise Exception(f"Error : {e}")
+            
+            await asyncio.sleep(0.5)
+            if len(response) > 4096:
+                for i in range(0,len(response),4096):
+                    part = response[i:i + 4096]
+                    await message.answer(text = part)
             else:
-                response = await add_to_queue(str(user_id),promt)
-                await remove_free_zapros(str(user_id))
-                try:
-                    await think_message.delete()
-                except Exception as e:
-                    raise Exception(f"Error : {e}")
-                
-                await asyncio.sleep(0.5)
-                if len(response) > 4096:
-                    for i in range(0,len(response),4096):
-                        part = response[i:i + 4096]
-                        await message.answer(text = part)
-                else:
-                    await message.answer(text = response)
-                await write_message(str(user_id), str(full_text), response)
+                await message.answer(text = response)
+            await write_message(str(user_id), str(full_text), response)
         else:
             #full_text = str(message.text) + "\n" + str(message.caption) + "\n" + text
             response = await add_to_queue(str(user_id),promt)
