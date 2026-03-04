@@ -758,6 +758,7 @@ async def answer_messages(message:Message):
             #await think_message.delete()
             if type(response) == str:
                 await message.answer(text = response)
+                return
             elif type(response) == bytes:
                 await message.answer_photo(
                     photo=BufferedInputFile(
