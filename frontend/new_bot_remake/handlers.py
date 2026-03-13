@@ -172,6 +172,7 @@ async def create_user_data_in_nano_database(username:str):
 @router.startup()
 async def start_up():
     await start_worker(5) 
+    await start_voice_worker(5)
     
 
 @router.message(Command("profile"))
@@ -729,7 +730,7 @@ async def ask_chat_gpt(request: str | List[str],user_id:str) -> str | bytes:
 
 
 
-@router.message(F.text & ~F.command)
+@router.message(F.text)
 async def answer_messages(message:Message):
         #user_state = await get_user_state(str(message.from_user.id))
         await refil_requests_basic_sub(str(message.from_user.id))
@@ -1252,7 +1253,226 @@ async def answer_with_document(message: Message):
         raise Exception(f"Error : {e}")
 
 
+voice_queue = Queue(maxsize=100)
+
+
+
+
+async def voice_worker():
+    while True:
+        user_id,request,future = await voice_queue.get()
+        
+        try:
+            response = await transcribe_audio_file(request)
+            future.set_result(response)
+            
+        except Exception as e:
+            future.set_exception(e)
+            print(f"Error : {e}")
+        finally:
+            voice_queue.task_done()
+
+async def start_voice_worker(count = 5):
+    for i in range(count):
+        asyncio.create_task(voice_worker(),name = f"worker_{i}")
+    print(f"✅ Запущено {count} voice воркеров")
+
+async def voice_add_to_queue(user_id:str,request:str) -> str | bytes:
+    future = asyncio.Future()
+    try:
+        await asyncio.wait_for(
+            voice_queue.put((user_id, request, future)), 
+            timeout=5.0
+        )
+    except asyncio.TimeoutError:
+        return "🔄 Очередь переполнена"
+    try:
+        result = await asyncio.wait_for(future,timeout=200)
+        return result
+    except asyncio.TimeoutError:
+        future.cancel()
+        return "⏱️ Превышено время ожидания"
+
+
+
+async def transcribe_audio_file(file_path: str) -> str:
+    async with aiofiles.open(file_path,"rb") as file:
+        file_bytes = await file.read()
+    
+    audio_b64 = base64.b64encode(file_bytes).decode("utf-8")
+
+    response = await client.chat.completions.create(
+        model="google/gemini-2.5-flash",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_audio",
+                        "input_audio": {
+                            "data": audio_b64,
+                            "format": "ogg"
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": "Распознай речь из этого голосового сообщения и верни только текст без пояснений."
+                    }
+                ]
+            }
+        ]
+    )
+
+    text = response.choices[0].message.content
+    return (text or "").strip()
+    
+    
+        
 
 @router.message(F.voice)
 async def voice_message_handler(message:Message):
-    pass
+    await refil_requests_basic_sub(str(message.from_user.id))
+    user_id = message.from_user.id
+    await update_last_time(str(user_id))
+    await create_user_data_in_nano_database(str(user_id))
+    res_unsub: bool = await unsub_full_func(str(user_id))
+    user_model = await get_user_model_name(str(user_id))
+    think_message = await message.answer("Думаю...")
+    
+    has_req:bool = await is_user_has_free_req(str(user_id))
+    if has_req:
+        basic_sub = await is_user_subbed_basic(str(user_id))
+        if basic_sub:
+            await think_message.delete()
+            await message.answer(text = "У вас на сегодня закончились запросы. Попробуйте  завтра")
+            return
+        else:
+            await think_message.delete()
+            await message.answer(text = "У вас не осталось бесплатных запросов.Купить подписку вы можете по команде /pay")
+            return
+    
+    free_ref_sub = await  time_to_give_free_referal_sub(str(user_id))
+    if free_ref_sub:
+        ref_text = """✅ Basic подписка получена!
+✅ Награда за 5 приглашённых друзей
+✅ Активна 30 дней"""
+        await message.answer(text = ref_text)    
+        
+                
+            
+                
+        
+    
+    if res_unsub:
+        await message.answer( text="📅 Ваша подписка закончилась.\n\n"
+        "🔓 Чтобы продолжить пользоваться платным функционалом, вам нужно оформить её снова.\n\n"
+        "🆓 Вы можете пользоваться ботом в пределах бесплатного тарифа.\n\n"
+        "Благодарим за поддержку!")
+    
+    
+    user_messages = await get_all_user_messsages(str(user_id))
+    
+    
+    
+    voice = message.voice
+
+    file_info = await message.bot.get_file(voice.file_id)
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".ogg") as tmp_file:
+        await message.bot.download_file(file_info.file_path, tmp_file.name)
+        voice_path = tmp_file.name
+        
+    voice_text = await voice_add_to_queue(str(message.from_user.id),voice_path)
+    
+    os.unlink(voice_path)
+    
+    
+    
+    is_user_subbed_ = await is_user_subbed(str(user_id))
+        
+    promt = f"""Ты — ассистент, который помогает пользователю, учитывая контекст переписки.
+
+История сообщений пользователя (для понимания стиля и контекста):
+{user_messages}
+
+Текущее сообщение пользователя (на которое нужно ответить):
+{voice_text}
+
+Задача: Ответь на текущее сообщение пользователя, опираясь на историю переписки. Сохраняй релевантность и последовательность диалога.
+Забудь про Markdown, JSON и любой другой синтаксис. Отвечай обычным человеческим текстом, как в переписке. Без звездочек, решеток, кавычек, блоков кода и форматирования. Если нужно записать уравнение или пример — пиши его в строчку обычными символами, например: x2 + 2x - 3 = 0 или 3 * 4 = 12. Главное правило: никаких спецсимволов для оформления, только текст."""
+        
+    user_model = await get_user_model_name(str(user_id))
+    if user_model == "google/gemini-3-pro-image-preview":
+        user_nano_req = await get_user_req_nano(str(user_id))
+        #user_subbed = await is_user_subbed(str(user_id))
+        if user_nano_req == 0:
+            await message.answer(text = "У вас не осталось запросов к Nano Banana.")
+            return
+        
+        response = await add_to_queue(str(user_id),str(message.text))
+        await think_message.delete()
+        if type(response) == str:
+            await message.answer(text = response)
+            return
+        elif type(response) == bytes:
+            await message.answer_photo(
+                photo=BufferedInputFile(
+                    file=response,
+                    filename="image.png"
+                ),
+                caption=f"Промт: {str(message.text)}"
+            )
+        await minus_one_req_nano(str(user_id))    
+        return
+            
+        
+    if not is_user_subbed_:
+        user_free_req = await get_amount_of_zaproses(str(user_id))
+        user_basic_sub = await is_user_subbed_basic(str(user_id))
+        if user_free_req == 0:
+            if user_basic_sub:
+                await think_message.delete()
+                await message.answer(text = "У вас на сегодня закончились запросы.Попробуйте  завтра")
+            else:
+                await think_message.delete()
+                await message.answer(text = "У вас не осталось бесплатных запросов.Купить подписку вы можете по команде /pay")
+        else:
+            
+            response = await add_to_queue(str(user_id),promt)
+            await remove_free_zapros(str(user_id))
+            try:
+                await think_message.delete()
+            except Exception as e:
+                raise Exception(f"Error : {e}")
+            #await asyncio.sleep(0.5)
+            
+            
+            if len(response) > 4096:
+                for i in range(0,len(response),4096):
+                    part = response[i:i + 4096]
+                    await message.answer(text = part)
+            else:
+                await message.answer(text = response)        
+            await write_message(str(user_id),str(message.text),response)
+    else:
+        response = await add_to_queue(str(user_id),promt)
+        try:
+            await think_message.delete()
+        except Exception as e:
+            raise Exception(f"Error : {e}")
+        # await asyncio.sleep(0.5)
+        
+        
+        if len(response) > 4096:
+            for i in range(0,len(response),4096):
+                part = response[i:i + 4096]
+                await message.answer(text = part)
+        else:
+            await message.answer(text = response)        
+        await write_message(str(user_id),str(message.text),response)
+    
+            
+
+
+
+
