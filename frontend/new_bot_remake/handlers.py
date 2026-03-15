@@ -89,7 +89,7 @@ async def time_to_give_free_referal_sub(username:str) -> bool:
         recieved_sub = await does_user_have_referal_sub(username)
         if recieved_sub:
             return False
-        else:
+        else:cle
             await give_referal_sub(username)
             await subscribe_basic(username)
             return True

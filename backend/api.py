@@ -103,4 +103,3 @@ class Regsiter(BaseModel):
 async def regsiter(request:Request,req:Regsiter,x_signature:str = Header(...),x_timestamp:str = Header(...)):
     if not verify_signature(req.model_dump(),x_signature,x_timestamp):
         raise HTTPException(status_code = status.HTTP_403_FORBIDDEN,detail = "Invalid")
-    
