@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="logo.png" height="200">
+  <img src="logo.jpg" height="200">
 </p>
 <h1 align="center">
-  BBG-ChatGPT.
+  NEUROHUB
 </h1>
 
 ## Installation for developers
