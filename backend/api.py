@@ -291,7 +291,7 @@ async def unsub_premium_api(request:Request,user_data = Depends(get_current_user
 
 @limiter.limit("20/minute")
 @app.post("/is/user/subbed")
-async def is_user_subbed(request:Request,user_data = Depends(get_current_user)):
+async def is_user_subbed_api(request:Request,user_data = Depends(get_current_user)):
     
     try:
         result:bool = await set_sub_bac_to_false(user_data["user_id"])
@@ -396,9 +396,8 @@ async def ask_chat_gpt(request: str | List[str],user_id:str) -> str | bytes:
 class AskAi(BaseModel):
     request:str
 
-
-@limiter.limit("20/minute")
 @app.post("/ask")
+@limiter.limit("20/minute")
 async def ask_ai_text(request:Request,
                 req:AskAi,user_data:dict = Depends(get_current_user)):
     try:
@@ -450,7 +449,7 @@ async def ask_ai_text(request:Request,
         # с премиум подпиской
 
         else:
-            response = await ask_chat_gpt(username,promt)
+            response = await ask_chat_gpt(promt,username)
             await write_message(username,req.request,response)
             return response
             
@@ -459,6 +458,7 @@ async def ask_ai_text(request:Request,
     except HTTPException:
         raise
     except Exception as e:
+        print(e)
         raise HTTPException(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,detail = "Server Error.")
 
 
