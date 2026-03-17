@@ -327,23 +327,25 @@ async def ask_chat_gpt(request: str | List[str],user_id:str) -> str | bytes:
         
         user_model = await get_user_model_name(user_id)
         
-        if user_model == "google/gemini-3-pro-image-preview":
-            content = [
+        content = [
                         {
                             "type": "text",
                             "text": req
                         }
                     ]
             
-            if image_base64:
-                content.append(
-                    {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{image_base64}"
-                            }
-                    }
-                )
+        if image_base64:
+            content.append(
+                {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{image_base64}"
+                        }
+                }
+            )
+
+
+        if user_model == "google/gemini-3-pro-image-preview":
             response = await client.chat.completions.create(
             model=user_model,
             messages=[
@@ -376,22 +378,6 @@ async def ask_chat_gpt(request: str | List[str],user_id:str) -> str | bytes:
             
             
 
-        content = [
-                        {
-                            "type": "text",
-                            "text": req
-                        }
-                    ]
-        
-        if image_base64:
-            content.append(
-                {
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/jpeg;base64,{image_base64}"
-                    }
-                }
-            )
         response = await client.chat.completions.create(  # <-- ВАЖНО: используем chat.completions
             model=user_model,  # <-- ПРАВИЛЬНОЕ имя модели
             messages=[
@@ -415,14 +401,11 @@ async def ask_chat_gpt(request: str | List[str],user_id:str) -> str | bytes:
 class AskAi(BaseModel):
     request:str
 
-<<<<<<< HEAD
 
-@limiter.limit("20/minute")
-@app.post("/ask/text")
-=======
+
 @app.post("/ask")
 @limiter.limit("20/minute")
->>>>>>> 4bf99de4ebdd386d9b79d55ce6f7eee473041142
+
 async def ask_ai_text(request:Request,
                 req:AskAi,user_data:dict = Depends(get_current_user)):
     try:
@@ -446,13 +429,13 @@ async def ask_ai_text(request:Request,
             #user_subbed = await is_user_subbed(str(user_id))
             if user_nano_req == 0:
                return "У вас не осталось запросов к Nano Banana."
+
+
             response = await ask_chat_gpt(req.request,username)
-            if type(response) == str:
-                return response # текстовый ответ что то вроде "нет изображения в ответа"
-            elif type(response) == bytes:
-                return response # base64 код картинк
+
+
             await minus_one_req_nano(username)    
-            return
+            return response #  либо текст, либо base64 код картинки
 
         # просто текстовые нейронки 
 
@@ -552,6 +535,42 @@ async def ask_ai_image(request:Request,req:AskAi,user_data:dict = Depends(get_cu
 
 
 
+        if user_model == "google/gemini-3-pro-image-preview":
+            user_nano_req = await get_user_req_nano(username)
+
+            #user_subbed = await is_user_subbed(str(user_id))
+            if user_nano_req == 0:
+               return "У вас не осталось запросов к Nano Banana."
+
+            response = await ask_chat_gpt([req.request,image_base_64],username)
+
+
+            await minus_one_req_nano(username)    
+            return response #  либо текст, либо base64 код картинки
+
+        # просто текстовые нейронки 
+
+        # без проемиум подписки (basic + нет подписки)
+        if not is_user_subbed_flag:
+            user_free_req = await get_amount_of_zaproses(username)
+            user_basic_sub = await is_user_subbed_basic(username)
+            if user_free_req == 0:
+                if user_basic_sub:
+                    return "У вас на сегодня закончились запросы.Попробуйте  завтра"
+                else:
+                    return "У вас не осталось бесплатных запросов.Купить подписку вы можете по перейдя в раздел покупки. "
+
+            else:
+                response = await ask_chat_gpt([promt,image_base_64],username)
+                await remove_free_zapros(username)
+                await write_message(username,req.request,response)
+                return response
+        # с премиум подпиской
+
+        else:
+            response = await ask_chat_gpt([promt,image_base_64],username)
+            await write_message(username,req.request,response)
+            return response
 
 
 
