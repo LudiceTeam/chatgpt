@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="logo.png" height="200">
+  <img src="logo.jpg" height="200">
 </p>
 <h1 align="center">
-  BBG-ChatGPT.
+  NEUROHUB
 </h1>
 
 ## Installation for developers
@@ -33,4 +33,4 @@ python3 api.py
 > [!IMPORTANT]
 > The frontend requires a running backend server to function. Make sure to start the backend first.
 ## Licence
-BBG-chatGPT is released under the [Apache License 2.0](LICENSE).
+NEUROHUB is released under the [Apache License 2.0](LICENSE).
