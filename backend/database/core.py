@@ -219,7 +219,9 @@ async def get_sub_date_end(username:str) -> str:
         
 # Basic sub code
         
-async def subscribe_basic(username:str):
+async def subscribe_basic(username:str) -> bool:
+    if not await is_user_exists(username):
+        return False
     async with AsyncSession(async_engine) as conn:
         async with conn.begin():
             try:
@@ -232,10 +234,13 @@ async def subscribe_basic(username:str):
                     date = str(date_exp)
                 )
                 await conn.execute(stmt)
+                return True
             except Exception as e:
                 raise Exception(f"Error : {e}")
 
 async def unsub_basic(username:str):
+    if not await is_user_exists(username):
+        return False 
     async with AsyncSession(async_engine) as conn:
         async with conn.begin():
             try:
@@ -245,6 +250,7 @@ async def unsub_basic(username:str):
                     date = ""
                 )
                 await conn.execute(stmt)
+                return True
             except Exception as e:
                 raise Exception(f"Error : {e}")
             

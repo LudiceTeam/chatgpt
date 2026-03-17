@@ -583,6 +583,106 @@ async def ask_ai_image(request:Request,req:AskAi,user_data:dict = Depends(get_cu
 
 
 
+@limiter.limit("20/minute")
+@app.get("/get/user/subscription/date")
+async def get_user_subscription_date_api(request:Request,user_data:dict = Depends(get_current_user)):
+    try:
+        username = user_data["user_id"]
+        subscription_date = await get_sub_date_end(username)
+        return subscription_date
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,detail = "Server Error.")
+
+
+@limiter.limit("20/minite")
+@app.post("/subcribe/basic")
+async def subcribe_basic_api(request:Request,user_data:dict = Depends(get_current_user)):
+    try:
+        username = user_data["user_id"]
+        result:bool = await subscribe_basic(username)
+        if not result:
+            raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,detail = f"User : {user_data["user_id"]} not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,detail = "Server Error.")
+
+
+@limiter.limit("20/minite")
+@app.post("/unsub/basic")
+async def unsub_basic_api(request:Request,user_data:dict = Depends(get_current_user)):
+    try:
+        username = user_data["user_id"]
+        result:bool = await unsub_basic(username)
+        if not result:
+            raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,detail = f"User : {user_data["user_id"]} not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,detail = "Server Error.")
+
+
+@limiter.limit("20/minite")
+@app.post("/is/user/subbed/basic")
+async def is_user_subbed_basic_api(request:Request,user_data:dict = Depends(get_current_user)):
+    try:
+        username = user_data["user_id"]
+        result:bool = await is_user_subbed_basic(username)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,detail = "Server Error.")
+
+
+@limiter.limit("20/minute")
+@app.get("/get/last/ref/date/basic")
+async def get_last_ref_date_basic_api(request:Request,user_data:dict = Depends(get_current_user)):
+    try:
+        username = user_data["user_id"]
+        result:str = await get_last_ref_basic(username)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,detail = "Server Error.")
+
+
+@limiter.limit("20/minute")
+@app.post("/refil/zap")
+async def refil_zap_api(request:Request,user_data:dict = Depends(get_current_user)):
+    try:
+        username = user_data["user_id"]
+        result:bool = await refil_zap(username)
+        if not result:
+            raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,detail = f"User : {user_data["user_id"]} not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,detail = "Server Error.")   
+
+@limiter.limit("20/minute")
+@app.post("/update/last/ref/date")
+async def update_last_ref_date_api(request:Request,user_data:dict = Depends(get_current_user)):
+    try:
+        username = user_data["user_id"]
+        result:bool = await upadate_last_ref_date(username)
+        if not result:
+            raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,detail = f"User : {user_data["user_id"]} not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,detail = "Server Error.")
+
+
+
+
+
+
+
+
 if __name__ == "__main__":
     uvicorn.run(app,host = "0.0.0.0",port = 1488)
     
