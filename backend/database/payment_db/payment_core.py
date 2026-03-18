@@ -65,13 +65,35 @@ async def get_payment_status(payment_id:str) -> str:
         data = res.scalar_one_or_none()
         return data
 
-async def change_payment_state(payment_id:str,new_status:str = Literal["succeeded","failed","canceled"]):
+async def change_payment_state(payment_id:str,new_status:str = Literal["paid","failed","canceled"]):
     async with AsyncSession(async_engine) as conn:
         async with conn.begin():
             stmt = table.update().where(table.c.payment_id == payment_id).values(
                 status = new_status
             )
             await conn.execute(stmt)
-         
+
+            
+async def get_payment_by_id(payment_id:str) -> dict[str,str] | dict:
+    async with AsyncSession(async_engine) as conn:
+        stmt = select(table.c.user_id,
+                      table.c.status,
+                      table.c.price
+                      ).where(table.c.payment_id == payment_id)
+        
+        res = await conn.execute(stmt)
+        data = res.fetchone()
+
+        if not data:
+            return {}
+
+        user_id,status,price = data
+
+        return {
+            "payment_id":payment_id,
+            "user_id":user_id,
+            "status":status,
+            "price":price
+        }
 
 
